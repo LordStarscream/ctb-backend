@@ -2,9 +2,6 @@ package com.mabit.ctb;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.util.Assert;
-
-import jakarta.validation.constraints.AssertTrue;
 
 @SpringBootTest
 class CtbApplicationTests {

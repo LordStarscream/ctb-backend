@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mabit.ctb.entity;
 
 /**
@@ -21,35 +16,35 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name="Trades")
+@Table(name = "Trades")
 public class Trade implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Location exchange;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Currency currency;
 
     private Double value;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Currency buyCurrency;
 
     private Double buyValue;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Currency sellCurrency;
 
     private Double sellValue;
 
-    //@Column(nullable = true)
+    // @Column(nullable = true)
     private Double buyFee;
 
-    //@Column(nullable = true)
+    // @Column(nullable = true)
     private Double sellFee;
 
     private LocalDateTime buyingTime;
@@ -62,7 +57,7 @@ public class Trade implements Serializable {
     @Enumerated(EnumType.STRING)
     private TradingStatus status;
 
-    //@Column(nullable = true)
+    // @Column(nullable = true)
     private Double stopLoss;
 
     private String comment;
@@ -76,10 +71,13 @@ public class Trade implements Serializable {
     @OneToOne(orphanRemoval = false)
     private FiatExchangeRate tradeFiatExchange;
 
-    @OneToMany(orphanRemoval=true)
+    @OneToMany(orphanRemoval = true)
     private Set<TradingImage> images;
 
-    public Trade(Location exchange, Currency currency, Double value, Currency buyCurrency, Double buyValue, Currency sellCurrency, Double sellValue, Double buyFee, Double sellFee, LocalDateTime tradingTime, LocalDateTime sellingTime, TradingType tradingType, TradingStatus status, Double stopLoss, String comment, Set<TradingImage> images) {
+    public Trade(Location exchange, Currency currency, Double value, Currency buyCurrency, Double buyValue,
+            Currency sellCurrency, Double sellValue, Double buyFee, Double sellFee, LocalDateTime tradingTime,
+            LocalDateTime sellingTime, TradingType tradingType, TradingStatus status, Double stopLoss, String comment,
+            Set<TradingImage> images) {
         this.exchange = exchange;
         this.currency = currency;
         this.value = value;
@@ -97,6 +95,7 @@ public class Trade implements Serializable {
         this.comment = comment;
         this.images = images;
     }
+
     public LocalDateTime getTradingTime() {
         return buyingTime;
     }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mabit.ctb.entity;
 
 import java.io.Serializable;
@@ -14,31 +9,30 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
-
+@Data
+@NoArgsConstructor
 @Entity
-@Table(name="exchangeRessource")
-public class ExchangeRessource implements Serializable{
-    
+@Table(name = "exchangeRessource")
+public class ExchangeRessource implements Serializable {
+
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    
-    @OneToOne(orphanRemoval=false)
+
+    @OneToOne(orphanRemoval = false)
     private Location exchange;
-    
+
     private String ressource;
-    
+
     private LocalDateTime date;
-
-
-    public ExchangeRessource() {
-    }
 
     public ExchangeRessource(Location exchange, String ressource, LocalDateTime date) {
         this.exchange = exchange;
@@ -46,36 +40,4 @@ public class ExchangeRessource implements Serializable{
         this.date = date;
     }
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public Location getExchange() {
-        return exchange;
-    }
-
-    public void setExchange(Location exchange) {
-        this.exchange = exchange;
-    }
-
-    public String getRessource() {
-        return ressource;
-    }
-
-    public void setRessource(String ressource) {
-        this.ressource = ressource;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-    
 }

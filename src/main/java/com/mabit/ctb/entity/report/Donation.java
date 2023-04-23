@@ -1,13 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mabit.ctb.entity.report;
 
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Location;
-import com.mabit.ctb.types.TradingType;
 import com.mabit.ctb.types.TransactionType;
 
 import java.io.Serializable;
@@ -19,12 +13,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
 @Data
+@NoArgsConstructor
 @Entity
 @Table(name = "Income")
 public class Donation implements Serializable {
@@ -35,7 +31,7 @@ public class Donation implements Serializable {
 
     private Double ammount;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Currency currency;
 
     private LocalDateTime outDateTime;
@@ -44,7 +40,7 @@ public class Donation implements Serializable {
 
     private Double CostBase;
 
-    @OneToOne(orphanRemoval=false)
+    @OneToOne(orphanRemoval = false)
     private Location outAt;
 
     private TransactionType type;
@@ -52,10 +48,8 @@ public class Donation implements Serializable {
     // Wert bei eingang in EUR
     private Double worthAtOut;
 
-    public Donation() {
-    }
-
-    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String CostBaseCalculation, Double CostBase, Location outAt, TransactionType type, Double worthAtOut) {
+    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String CostBaseCalculation,
+            Double CostBase, Location outAt, TransactionType type, Double worthAtOut) {
         this.ammount = ammount;
         this.currency = currency;
         this.outDateTime = outDateTime;

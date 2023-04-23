@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mabit.ctb.entity.report;
 
 import com.mabit.ctb.entity.Currency;
@@ -15,11 +10,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Data
+@NoArgsConstructor
 @Entity
 @Table(name = "Hold")
 public class Hold implements Serializable {
@@ -29,19 +28,16 @@ public class Hold implements Serializable {
     private Long id;
 
     private Double ammount;
-    
+
     @OneToOne(orphanRemoval=false)
     private Currency inCurrency;
-    
+
     private LocalDateTime dateTime;
-    
+
     @OneToOne(orphanRemoval=false)
     private Location location;
-    
-    private Double factor;
 
-    public Hold() {
-    }
+    private Double factor;
 
     public Hold(Double ammount, Currency inCurrency, LocalDateTime dateTime, Location location, Double factor) {
         this.ammount = ammount;
@@ -49,24 +45,5 @@ public class Hold implements Serializable {
         this.dateTime = dateTime;
         this.location = location;
         this.factor = factor;
-    }
-    public void setAmmount(Double ammount){
-        this.ammount = ammount;
-    }
-
-    public Double getAmmount() {
-        return ammount;
-    }
-
-    public LocalDateTime getDateTime() {
-        return dateTime;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public Double getFactor() {
-        return factor;
     }
 }
