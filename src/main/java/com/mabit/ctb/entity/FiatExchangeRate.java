@@ -37,9 +37,6 @@ public class FiatExchangeRate implements Serializable {
 
     private LocalDateTime date;
 
-    @OneToOne(orphanRemoval = false)
-    @Nullable
-    private ExchangeRessource ressource;
 
     public FiatExchangeRate(Currency cryptoCurrency, Currency fiatCurrency, Location exchange, Double factor,
             LocalDateTime date) {
