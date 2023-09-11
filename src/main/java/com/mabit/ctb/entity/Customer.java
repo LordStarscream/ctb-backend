@@ -5,7 +5,6 @@ package com.mabit.ctb.entity;
  * @author mario
  */
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
