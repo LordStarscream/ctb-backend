@@ -11,13 +11,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import org.springframework.lang.Nullable;
-
 @Data
 @NoArgsConstructor
 @Entity
 @Table(name = "FiatExchangeRate")
-public class FiatExchangeRate implements Serializable {
+public class FiatExchangeRate {
 
     @Id
     @NotNull

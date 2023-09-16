@@ -1,3 +1,8 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package com.mabit.ctb.types;
 
 /**
@@ -13,13 +18,15 @@ public enum TransactionType {
     Income("Income"), // Verdienst (GAS)
     Lost("Lost"); // Verlust
 
+
     private String label;
 
-    TransactionType(String label) {
+    TransactionType(String label){
         this.label = label;
     }
 
-    public String toString() {
+    @Override
+    public String toString(){
         return label;
     }
 }

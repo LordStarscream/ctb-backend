@@ -1,23 +1,13 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
-
-import javax.validation.Valid;
-
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.repository.TransactionImportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -32,21 +22,11 @@ public class PhemexUSDCorrection implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
     private List<TransactionImport> importEntities;
 
 
-    public PhemexUSDCorrection(){
-    }
     public List<TransactionImport> getImportEntities() {
         return importEntities;
     }
@@ -67,13 +47,8 @@ public class PhemexUSDCorrection implements FileImport{
     private Double getValue(String valueWithTicker) {
         var value = valueWithTicker.substring(1); //remove + or -
         var a = value.split(" ");
-        return Parse.StringToDouble(a[0]);
+        return Parse.stringToDouble(a[0]);
     }
-
-    private Location getLocation(String name) {
-        return locationRepository.findByName(name);
-    }
-
 
     private TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
@@ -96,7 +71,7 @@ public class PhemexUSDCorrection implements FileImport{
                 transaction.setOutCurrency(getCurrency(entry[6]));
             }
         }
-        //transaction.setComment(entry[5]);
+
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
@@ -136,8 +111,6 @@ public class PhemexUSDCorrection implements FileImport{
         csvReader.setStringDelimiter("\"");
         var test = csvReader.getStringDelimiter();
         csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
         ArrayList<String[]> entries = csvReader.getEntries();
         importEntities = convertToEntities(entries);
         persistImport();
@@ -153,6 +126,4 @@ public class PhemexUSDCorrection implements FileImport{
     public String toString(){
         return getName();
     }
-
-
 }

@@ -1,23 +1,14 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
-
-import javax.validation.Valid;
-
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.repository.LocationRepository;
+import com.mabit.ctb.repository.TransactionImportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -32,17 +23,8 @@ public class ByBitDerivativesImport implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
-    public ByBitDerivativesImport() {
-      // only for instanciation
-    }
-
     private List<TransactionImport> importEntities;
 
     public List<TransactionImport> getImportEntities() {
@@ -63,7 +45,7 @@ public class ByBitDerivativesImport implements FileImport{
         var val = guv;
         if (guv.startsWith("-"))
             val = guv.substring(1);
-        return Parse.StringToDouble(val);
+        return Parse.stringToDouble(val);
     }
 
     private TransactionImport entryToEntity(String[] entry) {
@@ -90,18 +72,16 @@ public class ByBitDerivativesImport implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
-        try {
-            try {
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                dateTime = LocalDateTime.parse(timeField, formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(timeField, formatter);
-            }
-        } catch (Exception ex) {
-        }
-        transaction.setDateTime(dateTime);
 
+        try {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateTime = LocalDateTime.parse(timeField, formatter);
+        } catch (Exception ex) {
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(timeField, formatter);
+        }
+
+        transaction.setDateTime(dateTime);
         return transaction;
     }
 
@@ -124,8 +104,6 @@ public class ByBitDerivativesImport implements FileImport{
         csvReader.setStringDelimiter("\"");
         var test = csvReader.getStringDelimiter();
         csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
         ArrayList<String[]> entries = csvReader.getEntries();
         importEntities = convertToEntities(entries);
         persistImport();

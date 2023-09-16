@@ -1,4 +1,4 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -8,14 +8,13 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.Currency;
+import com.mabit.ctb.entity.Location;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.repository.LocationRepository;
+import com.mabit.ctb.repository.TransactionImportRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,35 +30,17 @@ public class CoinTrackingImport implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
     @Autowired
     private CurrencyRepository currencyRepository;
-
     @Autowired
     private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
-    //private Dictionary<String, Currency> currencyMapping;
     private Dictionary<String, TransactionType> typeMapping;
-    //private Dictionary<String, Location> locationMapping;
-
-    public CoinTrackingImport() {
-    }
-
     private List<TransactionImport> importEntities;
 
     public List<TransactionImport> getImportEntities() {
         return importEntities;
-    }
-
-    private Currency getCurrency(String ticker) {
-        return currencyRepository.findByTicker(ticker);
-    }
-
-    private Location getLocation(String name) {
-        return locationRepository.findByName(name);
     }
 
     private void initDictionaries() {
@@ -76,11 +57,11 @@ public class CoinTrackingImport implements FileImport{
     private TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
         transaction.setType(typeMapping.get(entry[0]));
-        transaction.setInValue(Parse.StringToDouble(entry[1]));
+        transaction.setInValue(Parse.stringToDouble(entry[1]));
         transaction.setInCurrency(entry[2]);
-        transaction.setOutValue(Parse.StringToDouble(entry[3]));
+        transaction.setOutValue(Parse.stringToDouble(entry[3]));
         transaction.setOutCurrency(entry[4]);
-        transaction.setFee(Parse.StringToDouble(entry[5]));
+        transaction.setFee(Parse.stringToDouble(entry[5]));
         transaction.setFeeCurrency(entry[6]);
         transaction.setExchange(entry[7]);
         transaction.setComment(entry[9]);

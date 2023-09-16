@@ -1,6 +1,5 @@
 package com.mabit.ctb.entity;
 
-import com.mabit.ctb.types.TradeDirection;
 import com.mabit.ctb.types.TransactionType;
 
 import jakarta.persistence.*;
@@ -18,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "TransactionImport")
-public class TransactionImport implements Serializable {
+public class TransactionImport  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

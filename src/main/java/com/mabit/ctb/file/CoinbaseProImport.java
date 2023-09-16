@@ -1,4 +1,4 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -7,15 +7,9 @@ import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
-
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.repository.TransactionImportRepository;
+import com.mabit.ctb.types.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -30,23 +24,9 @@ public class CoinbaseProImport implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
-    //private Dictionary<String, Currency> currencyMapping;
     private Dictionary<String, TransactionType> typeMapping;
-    //private Dictionary<String, Location> locationMapping;
-
-    public CoinbaseProImport() {
-    }
-
     private List<TransactionImport> importEntities;
 
     public List<TransactionImport> getImportEntities() {
@@ -54,10 +34,9 @@ public class CoinbaseProImport implements FileImport{
     }
 
     private void initDictionaries() {
-        typeMapping = new Hashtable<String, TransactionType>();
+        typeMapping = new Hashtable<>();
         typeMapping.put("BUY", TransactionType.Deposit);
         typeMapping.put("SELL", TransactionType.Withdraw);
-
     }
 
     private TransactionImport entryToEntity(String[] entry) {
@@ -65,19 +44,19 @@ public class CoinbaseProImport implements FileImport{
         var type = typeMapping.get(entry[3]);
         transaction.setType(TransactionType.Trade);
         if (type == TransactionType.Deposit){
-            transaction.setInValue(Parse.StringToDouble(entry[5]));
+            transaction.setInValue(Parse.stringToDouble(entry[5]));
             transaction.setInCurrency(entry[6]);
-            transaction.setOutValue(- Parse.StringToDouble(entry[9]));
+            transaction.setOutValue(- Parse.stringToDouble(entry[9]));
             transaction.setOutCurrency(entry[10]);
         }
         else
         {
-            transaction.setInValue(Parse.StringToDouble(entry[9]));
+            transaction.setInValue(Parse.stringToDouble(entry[9]));
             transaction.setInCurrency(entry[10]);
-            transaction.setOutValue(Parse.StringToDouble(entry[5]));
+            transaction.setOutValue(Parse.stringToDouble(entry[5]));
             transaction.setOutCurrency(entry[6]);
         }
-        transaction.setFee(Parse.StringToDouble(entry[8]));
+        transaction.setFee(Parse.stringToDouble(entry[8]));
         transaction.setFeeCurrency(entry[10]);
         transaction.setExchange(getName());
         transaction.setComment(entry[0]);

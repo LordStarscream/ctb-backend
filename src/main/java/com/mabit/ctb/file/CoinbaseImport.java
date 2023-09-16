@@ -1,4 +1,4 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -8,14 +8,12 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.repository.LocationRepository;
+import com.mabit.ctb.repository.TransactionImportRepository;
+import com.mabit.ctb.types.TransactionType;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -42,10 +40,6 @@ public class CoinbaseImport implements FileImport{
 
     private Dictionary<String, TransactionType> typeMapping;
     private Dictionary<String, TransactionType> tradeDirection;
-
-    public CoinbaseImport() {
-    }
-
     private List<TransactionImport> importEntities;
 
     public List<TransactionImport> getImportEntities() {
@@ -53,7 +47,7 @@ public class CoinbaseImport implements FileImport{
     }
 
     private void initDictionaries() {
-        typeMapping = new Hashtable<String, TransactionType>();
+        typeMapping = new Hashtable<>();
         typeMapping.put("Buy", TransactionType.Trade);
         typeMapping.put("Sell", TransactionType.Trade);
         typeMapping.put("Rewards Income", TransactionType.Income);
@@ -62,7 +56,7 @@ public class CoinbaseImport implements FileImport{
         typeMapping.put("Receive", TransactionType.Deposit);
         typeMapping.put("Send", TransactionType.Withdraw);
 
-        tradeDirection = new Hashtable<String, TransactionType>();
+        tradeDirection = new Hashtable<>();
         tradeDirection.put("Buy", TransactionType.Deposit);
         tradeDirection.put("Sell", TransactionType.Withdraw);
 
@@ -75,34 +69,34 @@ public class CoinbaseImport implements FileImport{
             var direction = tradeDirection.get(entry[1]);
             if (direction == TransactionType.Deposit){
                 transaction.setType(type);
-                transaction.setInValue(Parse.StringToDouble(entry[3]));
+                transaction.setInValue(Parse.stringToDouble(entry[3]));
                 transaction.setInCurrency(entry[2]);
-                transaction.setOutValue(- Parse.StringToDouble(entry[6]));
+                transaction.setOutValue(- Parse.stringToDouble(entry[6]));
                 transaction.setOutCurrency(entry[4]);
             }else{
                 transaction.setType(type);
-                transaction.setInValue(Parse.StringToDouble(entry[6]));
+                transaction.setInValue(Parse.stringToDouble(entry[6]));
                 transaction.setInCurrency(entry[4]);
-                transaction.setOutValue(Parse.StringToDouble(entry[3]));
+                transaction.setOutValue(Parse.stringToDouble(entry[3]));
                 transaction.setOutCurrency(entry[2]);
             }
         }
         if (type == TransactionType.Gift || type == TransactionType.Deposit || type == TransactionType.Income){
             transaction.setType(type);
-            transaction.setInValue(Parse.StringToDouble(entry[3]));
+            transaction.setInValue(Parse.stringToDouble(entry[3]));
             transaction.setInCurrency(entry[2]);
-            transaction.setOutValue(Parse.StringToDouble(entry[6]));
+            transaction.setOutValue(Parse.stringToDouble(entry[6]));
             transaction.setOutCurrency(entry[4]);
         }
 
         if(type == TransactionType.Withdraw){
             transaction.setType(type);
-                transaction.setInValue(Parse.StringToDouble(entry[6]));
+                transaction.setInValue(Parse.stringToDouble(entry[6]));
                 transaction.setInCurrency(entry[4]);
-                transaction.setOutValue(Parse.StringToDouble(entry[3]));
+                transaction.setOutValue(Parse.stringToDouble(entry[3]));
                 transaction.setOutCurrency(entry[2]);
         }
-        transaction.setFee(Parse.StringToDouble(entry[8]));
+        transaction.setFee(Parse.stringToDouble(entry[8]));
         transaction.setFeeCurrency(entry[4]);
         transaction.setExchange(getName());
         transaction.setComment(entry[9]);

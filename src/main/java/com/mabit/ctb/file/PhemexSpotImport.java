@@ -1,4 +1,4 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -7,17 +7,13 @@ import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
-
-import javax.validation.Valid;
-
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.Currency;
+import com.mabit.ctb.entity.Location;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.repository.LocationRepository;
+import com.mabit.ctb.repository.TransactionImportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -32,22 +28,12 @@ public class PhemexSpotImport implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
     @Autowired
     private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
     private List<TransactionImport> importEntities;
-
     private Dictionary<String, TransactionType> typeMapping;
-
-    public PhemexSpotImport(){
-    }
     public List<TransactionImport> getImportEntities() {
         return importEntities;
     }
@@ -59,7 +45,7 @@ public class PhemexSpotImport implements FileImport{
 
     private Double getValue(String valueWithTicker) {
         var a = valueWithTicker.split(" ");
-        return Parse.StringToDouble(a[0]);
+        return Parse.stringToDouble(a[0]);
     }
 
     private Location getLocation(String name) {

@@ -1,23 +1,18 @@
-package com.mabit.CTB.fileImport;
+package com.mabit.ctb.file;
 
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.List;
-
-import javax.validation.Valid;
-
-import com.mabit.CTB.entity.Currency;
-import com.mabit.CTB.entity.Location;
-import com.mabit.CTB.entity.TransactionImport;
-import com.mabit.CTB.enums.TransactionType;
-import com.mabit.CTB.helper.Parse;
-import com.mabit.CTB.repository.CurrencyRepository;
-import com.mabit.CTB.repository.LocationRepository;
-import com.mabit.CTB.repository.TransactionImportRepository;
+import com.mabit.ctb.entity.Currency;
+import com.mabit.ctb.entity.Location;
+import com.mabit.ctb.entity.TransactionImport;
+import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.repository.LocationRepository;
+import com.mabit.ctb.repository.TransactionImportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -32,35 +27,12 @@ public class PhemexContractImport implements FileImport{
 
     @Autowired
     private CsvReader csvReader;
-
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
     @Autowired
     private TransactionImportRepository importRepository;
-
-    //private Dictionary<String, Currency> currencyMapping;
-    private Dictionary<String, TransactionType> typeMapping;
-    //private Dictionary<String, Location> locationMapping;
-
-    public PhemexContractImport() {
-    }
-
     private List<TransactionImport> importEntities;
 
     public List<TransactionImport> getImportEntities() {
         return importEntities;
-    }
-
-    private Currency getCurrency(String ticker) {
-        return currencyRepository.findByTicker(ticker);
-    }
-
-    private Location getLocation(String name) {
-        return locationRepository.findByName(name);
     }
 
     private TransactionType getType(String guv) { //gewin und verlust
@@ -82,7 +54,7 @@ public class PhemexContractImport implements FileImport{
         var valString = removeCurrencyFromValue(guv);
         if (guv.startsWith("-"))
             valString = valString.substring(1);
-        return Parse.StringToDouble(valString);
+        return Parse.stringToDouble(valString);
     }
 
     private TransactionImport entryToEntity(String[] entry) {
@@ -99,7 +71,7 @@ public class PhemexContractImport implements FileImport{
             transaction.setOutValue(getGuvValue(guv));
             transaction.setOutCurrency(getCurrencyFromValue(guv));
         }
-        transaction.setFee(Parse.StringToDouble(removeCurrencyFromValue(entry[7]))-Parse.StringToDouble(removeCurrencyFromValue(entry[8])));
+        transaction.setFee(Parse.stringToDouble(removeCurrencyFromValue(entry[7]))-Parse.stringToDouble(removeCurrencyFromValue(entry[8])));
         transaction.setFeeCurrency(getCurrencyFromValue(entry[7]));
         transaction.setExchange("Phemex");
         transaction.setComment(entry[2]);
@@ -107,18 +79,15 @@ public class PhemexContractImport implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
         try {
-            try {
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                dateTime = LocalDateTime.parse(entry[1], formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(entry[1], formatter);
-            }
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateTime = LocalDateTime.parse(entry[1], formatter);
         } catch (Exception ex) {
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(entry[1], formatter);
         }
         transaction.setDateTime(dateTime);
-
         return transaction;
     }
 
@@ -141,8 +110,6 @@ public class PhemexContractImport implements FileImport{
         csvReader.setStringDelimiter("\"");
         var test = csvReader.getStringDelimiter();
         csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
         ArrayList<String[]> entries = csvReader.getEntries();
         importEntities = convertToEntities(entries);
         persistImport();

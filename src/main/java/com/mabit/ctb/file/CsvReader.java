@@ -1,9 +1,9 @@
+package com.mabit.ctb.file;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mabit.CTB.fileImport;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,15 +30,15 @@ public class CsvReader {
     public ArrayList<String[]> getEntries() {
         return entries;
     }
-    
+
     private ArrayList<String[]> entries;
 
     private boolean containsHeader = true;
 
     private String[] header;
-    
+
     private String delimiter;
-    
+
     private String stringDelimiter;
 
     public boolean hasHeader() {
@@ -56,7 +56,7 @@ public class CsvReader {
     public void setDelimiter(String delimiter) {
         this.delimiter = delimiter;
     }
-    
+
     public String getStringDelimiter() {
         return stringDelimiter;
     }
@@ -77,7 +77,7 @@ public class CsvReader {
         try {
             br = new BufferedReader(new FileReader(file));
             while ((line = br.readLine()) != null) {
-                //use comma as separator      
+                //use comma as separator
                 String cleanedLine = line.replaceAll(stringDelimiter,"");
                 String[] csvLine = cleanedLine.replaceAll(this.getStringDelimiter(), "").split(this.delimiter);
                 if (firstLine) {
