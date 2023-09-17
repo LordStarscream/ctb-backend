@@ -28,7 +28,7 @@ public class CoinTrackingImport extends FileImport{
         typeMapping.put("Geschenk", TransactionType.Gift);
         typeMapping.put("Einnahme", TransactionType.Income);
         typeMapping.put("Schenkung", TransactionType.Donation);
-        typeMapping.put("Verloren", TransactionType.Lost); // TODO not shure if correct term for coinTracker
+        typeMapping.put("Verloren", TransactionType.Lost);
         return typeMapping;
     }
 

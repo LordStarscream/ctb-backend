@@ -2,7 +2,6 @@ package com.mabit.ctb.entity;
 
 import com.mabit.ctb.types.TradeDirection;
 import com.mabit.ctb.types.TransactionType;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "Transaction")
-public class WalletTransaction implements Serializable {
+public class WalletTransaction{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,20 +62,6 @@ public class WalletTransaction implements Serializable {
 
     private String comment;
 
-    public WalletTransaction(TransactionType type, Location exchange, Double inValue, Currency inCurrency, Double outValue, Currency outCurrency, Double fee, Currency feeCurrency, Trade trade, LocalDateTime dateTime, String comment) {
-        this.type = type;
-        this.exchange = exchange;
-        this.inValue = inValue;
-        this.inCurrency = inCurrency;
-        this.outValue = outValue;
-        this.outCurrency = outCurrency;
-        this.fee = fee;
-        this.feeCurrency = feeCurrency;
-        this.trade = trade;
-        this.dateTime = dateTime;
-        this.comment = comment;
-    }
-
     public WalletTransaction(Trade trade, TradeDirection direction) {
         this.updateTransaction(trade, direction);
     }
@@ -92,7 +77,7 @@ public class WalletTransaction implements Serializable {
                 this.outValue = trade.getBuyValue();
                 this.outCurrency = trade.getBuyCurrency();
                 this.fee = trade.getBuyFee();
-                this.feeCurrency = trade.getBuyCurrency(); // TODO: extra currency or always in €
+                this.feeCurrency = trade.getBuyCurrency();
                 this.dateTime = trade.getTradingTime();
                 this.inFiatExchange = trade.getBuyFiatExchange();
             } else {

@@ -21,8 +21,8 @@ public class FileController {
 
     @PostMapping(value = "/file/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadFile(
-        @RequestParam("file") MultipartFile file,
-        @RequestParam("importFormat") String importFormat) {
+        @RequestParam MultipartFile file,
+        @RequestParam String importFormat) {
         try{
             fileService.importFile(file, importFormat);
             return ResponseEntity.ok("Datei erfolgreich hochgeladen und gespeichert");
