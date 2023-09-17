@@ -16,18 +16,22 @@ import org.springframework.beans.factory.annotation.Value;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
-public class Representation {
+public final class Representation {
+
+    private Representation(){
+        throw new IllegalStateException("it is a final class");
+    }
 
     @Value("${spring.application.seperator}")
     static char decimalSeparator;
 
     static NumberFormat formatterPrice = new DecimalFormat("#,##0.00;-#",(new DecimalFormatSymbols(Locale.GERMANY)));
-    //static NumberFormat formatterPricePos = new DecimalFormat("+#,##0.00;-#");
+    
     static NumberFormat formatterPercent = new DecimalFormat("+##0.00;-#");
 
     static NumberFormat formatterCrypto = new DecimalFormat("#,##0.000000;-#",(new DecimalFormatSymbols(Locale.GERMANY)));
 
-    private static double NullToZero(Double value){
+    private static double nullToZero(Double value){
         return (value != null)?value:0;
     }
 
@@ -52,8 +56,8 @@ public class Representation {
     }
 
     public static Double calculateProfit(Double buyPrice, Double sellPrice, Double buyFee, Double sellFee, boolean cleaned){
-        buyFee = NullToZero(buyFee);
-        sellFee = NullToZero(sellFee);
+        buyFee = nullToZero(buyFee);
+        sellFee = nullToZero(sellFee);
         Double profit = sellPrice - buyPrice;
         if (cleaned){
             profit-= buyFee;
@@ -67,8 +71,8 @@ public class Representation {
     }
 
     public static Double calculateProfitPercentage(Double buyPrice, Double sellPrice, Double buyFee, Double sellFee, boolean cleaned){
-        buyFee = NullToZero(buyFee);
-        sellFee = NullToZero(sellFee);
+        buyFee = nullToZero(buyFee);
+        sellFee = nullToZero(sellFee);
         Double percentage = ((100 / buyPrice) * sellPrice);
         if (cleaned)
             return (percentage-buyFee-sellFee)-100;
@@ -76,11 +80,11 @@ public class Representation {
         return percentage-100;
     }
 
-    public static NumberFormat PriceNumberFormat(){
+    public static NumberFormat priceNumberFormat(){
         return formatterPrice;
     }
 
-    public static NumberFormat PercentNumberFormat(){
+    public static NumberFormat percentNumberFormat(){
         return formatterPercent;
     }
 }

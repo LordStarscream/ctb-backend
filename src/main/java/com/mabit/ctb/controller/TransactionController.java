@@ -16,11 +16,11 @@ public class TransactionController {
 
     @GetMapping("/transaction/currencys")
     public Iterable<Currency> getAllCurrencies() {
-        return tradeService.GetAllCurrency();
+        return tradeService.getAllCurrency();
     }
 
     @PostMapping("/transaction/currency")
     public void createCurrency(String name, String ticker) {
-        tradeService.AddCurrency(ticker, name);
+        tradeService.addCurrency(ticker, name);
    }
 }

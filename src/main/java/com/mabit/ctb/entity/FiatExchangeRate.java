@@ -4,7 +4,6 @@ package com.mabit.ctb.entity;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

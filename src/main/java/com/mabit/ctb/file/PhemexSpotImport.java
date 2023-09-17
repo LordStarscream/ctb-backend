@@ -1,20 +1,12 @@
 package com.mabit.ctb.file;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.List;
-import com.mabit.ctb.entity.Currency;
-import com.mabit.ctb.entity.Location;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.types.TransactionType;
-import com.mabit.ctb.repository.CurrencyRepository;
-import com.mabit.ctb.repository.LocationRepository;
-import com.mabit.ctb.repository.TransactionImportRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -22,21 +14,10 @@ import org.springframework.stereotype.Service;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Slf4j
 @Service
 @Qualifier("Phemex_Spot")
-public class PhemexSpotImport implements FileImport{
-
-    @Autowired
-    private CsvReader csvReader;
-    @Autowired
-    private LocationRepository locationRepository;
-    @Autowired
-    private TransactionImportRepository importRepository;
-    private List<TransactionImport> importEntities;
-    private Dictionary<String, TransactionType> typeMapping;
-    public List<TransactionImport> getImportEntities() {
-        return importEntities;
-    }
+public class PhemexSpotImport extends FileImport{
 
     private String getCurrency(String valueWithTicker) {
         var a = valueWithTicker.split(" ");
@@ -48,20 +29,9 @@ public class PhemexSpotImport implements FileImport{
         return Parse.stringToDouble(a[0]);
     }
 
-    private Location getLocation(String name) {
-        return locationRepository.findByName(name);
-    }
-
-    private void initDictionaries() {
-        typeMapping = new Hashtable<String, TransactionType>();
-        typeMapping.put("Buy", TransactionType.Deposit);
-        typeMapping.put("Sell", TransactionType.Withdraw);
-
-    }
-
-    private TransactionImport entryToEntity(String[] entry) {
+    @Override
+    protected TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
-        var type = typeMapping.get(entry[3]);
         transaction.setType(TransactionType.Trade);
         transaction.setInValue(getValue(entry[3]));
         transaction.setInCurrency(getCurrency(entry[3]));
@@ -74,58 +44,23 @@ public class PhemexSpotImport implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
         try {
-            try {
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            }
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         } catch (Exception ex) {
+            log.info("Casting into defined format not possible, take ISO_DATA_TIME instead");
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         }
+
         transaction.setDateTime(dateTime);
 
         return transaction;
-    }
-
-    private List<TransactionImport> convertToEntities(ArrayList<String[]> entries) {
-        List<TransactionImport> transactions = new ArrayList<>();
-        for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
-        }
-        return transactions;
-    }
-
-    private void persistImport() {
-        if (!this.importEntities.isEmpty()) {
-            importRepository.saveAll(this.importEntities);
-        }
-    }
-
-    @Override
-    public void importFile(File file) {
-        initDictionaries();
-        csvReader.setStringDelimiter("\"");
-        var test = csvReader.getStringDelimiter();
-        csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
-        ArrayList<String[]> entries = csvReader.getEntries();
-        importEntities = convertToEntities(entries);
-        persistImport();
-        System.out.println("Import Successfull");
     }
 
     @Override
     public String getName(){
         return "Phemex Spot";
     }
-
-    @Override
-    public String toString(){
-        return getName();
-    }
-
-
 }

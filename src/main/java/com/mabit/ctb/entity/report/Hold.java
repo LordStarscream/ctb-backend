@@ -2,7 +2,6 @@ package com.mabit.ctb.entity.report;
 
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Location;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "Hold")
-public class Hold implements Serializable {
+public class Hold {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,11 +38,4 @@ public class Hold implements Serializable {
 
     private Double factor;
 
-    public Hold(Double ammount, Currency inCurrency, LocalDateTime dateTime, Location location, Double factor) {
-        this.ammount = ammount;
-        this.inCurrency = inCurrency;
-        this.dateTime = dateTime;
-        this.location = location;
-        this.factor = factor;
-    }
 }

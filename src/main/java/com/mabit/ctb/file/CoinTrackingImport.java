@@ -1,22 +1,13 @@
 package com.mabit.ctb.file;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.List;
-
-import com.mabit.ctb.entity.Currency;
-import com.mabit.ctb.entity.Location;
+import java.util.HashMap;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.types.TransactionType;
-import com.mabit.ctb.repository.CurrencyRepository;
-import com.mabit.ctb.repository.LocationRepository;
-import com.mabit.ctb.repository.TransactionImportRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -24,27 +15,13 @@ import org.springframework.stereotype.Service;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Slf4j
 @Service
 @Qualifier("CoinTracking")
-public class CoinTrackingImport implements FileImport{
+public class CoinTrackingImport extends FileImport{
 
-    @Autowired
-    private CsvReader csvReader;
-    @Autowired
-    private CurrencyRepository currencyRepository;
-    @Autowired
-    private LocationRepository locationRepository;
-    @Autowired
-    private TransactionImportRepository importRepository;
-    private Dictionary<String, TransactionType> typeMapping;
-    private List<TransactionImport> importEntities;
-
-    public List<TransactionImport> getImportEntities() {
-        return importEntities;
-    }
-
-    private void initDictionaries() {
-        typeMapping = new Hashtable<String, TransactionType>();
+    private HashMap<String, TransactionType> typeMap() {
+        HashMap<String, TransactionType> typeMapping = new HashMap<>();
         typeMapping.put("Trade", TransactionType.Trade);
         typeMapping.put("Einzahlung", TransactionType.Deposit);
         typeMapping.put("Auszahlung", TransactionType.Withdraw);
@@ -52,9 +29,12 @@ public class CoinTrackingImport implements FileImport{
         typeMapping.put("Einnahme", TransactionType.Income);
         typeMapping.put("Schenkung", TransactionType.Donation);
         typeMapping.put("Verloren", TransactionType.Lost); // TODO not shure if correct term for coinTracker
+        return typeMapping;
     }
 
-    private TransactionImport entryToEntity(String[] entry) {
+    @Override
+    protected TransactionImport entryToEntity(String[] entry) {
+        var typeMapping = typeMap();
         TransactionImport transaction = new TransactionImport();
         transaction.setType(typeMapping.get(entry[0]));
         transaction.setInValue(Parse.stringToDouble(entry[1]));
@@ -69,57 +49,23 @@ public class CoinTrackingImport implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
         try {
-            try {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(entry[10].replace(" ", "T"), formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
-                dateTime = LocalDateTime.parse(entry[10], formatter);
-            }
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(entry[10].replace(" ", "T"), formatter);
         } catch (Exception ex) {
+            log.info("Casting ISO_DATA_TIME format not possible,take dd.MM.yy HH:mm instead");
+            formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
+            dateTime = LocalDateTime.parse(entry[10], formatter);
         }
         transaction.setDateTime(dateTime);
 
         return transaction;
     }
 
-    private List<TransactionImport> convertToEntities(ArrayList<String[]> entries) {
-        List<TransactionImport> transactions = new ArrayList<TransactionImport>();
-        for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
-        }
-        return transactions;
-    }
-
-    private void persistImport() {
-        if (!this.importEntities.isEmpty()) {
-            importRepository.saveAll(this.importEntities);
-        }
-    }
-
-    @Override
-    public void importFile(File file) {
-        initDictionaries();
-        csvReader.setStringDelimiter("\"");
-        var test = csvReader.getStringDelimiter();
-        csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
-        ArrayList<String[]> entries = csvReader.getEntries();
-        importEntities = convertToEntities(entries);
-        persistImport();
-        System.out.println("Import Successfull");
-    }
-
     @Override
     public String getName(){
         return "CoinTracking";
-    }
-
-    @Override
-    public String toString(){
-        return getName();
     }
 
 }

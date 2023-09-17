@@ -10,10 +10,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  *
  * @author mario
  */
+@Slf4j
 public final class Parse {
 
     private Parse(){
@@ -28,8 +31,9 @@ public final class Parse {
     public static Double formatStringToDouble(String string) {
         Double res = null;
         try {
-            res = (string != null && !string.isEmpty()) ? Representation.PriceNumberFormat().parse(string).doubleValue() : null;
+            res = (string != null && !string.isEmpty()) ? Representation.priceNumberFormat().parse(string).doubleValue() : null;
         } catch (ParseException e) {
+            log.error("Error Parsing <"+string+"> into Double",e);
         }
         return res;
     }
@@ -53,5 +57,4 @@ public final class Parse {
             return null;
         }
     }
-
 }

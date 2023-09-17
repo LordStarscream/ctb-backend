@@ -1,20 +1,15 @@
 package com.mabit.ctb.file;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 
 import com.mabit.ctb.entity.TransactionImport;
-import com.mabit.ctb.repository.CurrencyRepository;
-import com.mabit.ctb.repository.LocationRepository;
-import com.mabit.ctb.repository.TransactionImportRepository;
 import com.mabit.ctb.types.TransactionType;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -22,32 +17,17 @@ import org.springframework.stereotype.Service;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Slf4j
 @Service
 @Qualifier("Coinbase")
-public class CoinbaseImport implements FileImport{
-
-    @Autowired
-    private CsvReader csvReader;
-
-    @Autowired
-    private CurrencyRepository currencyRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
-
-    @Autowired
-    private TransactionImportRepository importRepository;
-
-    private Dictionary<String, TransactionType> typeMapping;
-    private Dictionary<String, TransactionType> tradeDirection;
-    private List<TransactionImport> importEntities;
+public class CoinbaseImport extends FileImport{
 
     public List<TransactionImport> getImportEntities() {
         return importEntities;
     }
 
-    private void initDictionaries() {
-        typeMapping = new Hashtable<>();
+    private HashMap<String, TransactionType> typeMap() {
+        HashMap<String, TransactionType> typeMapping = new HashMap<>();
         typeMapping.put("Buy", TransactionType.Trade);
         typeMapping.put("Sell", TransactionType.Trade);
         typeMapping.put("Rewards Income", TransactionType.Income);
@@ -55,14 +35,21 @@ public class CoinbaseImport implements FileImport{
         typeMapping.put("Coinbase Earn", TransactionType.Gift);
         typeMapping.put("Receive", TransactionType.Deposit);
         typeMapping.put("Send", TransactionType.Withdraw);
-
-        tradeDirection = new Hashtable<>();
-        tradeDirection.put("Buy", TransactionType.Deposit);
-        tradeDirection.put("Sell", TransactionType.Withdraw);
+        return typeMapping;
 
     }
 
-    private TransactionImport entryToEntity(String[] entry) {
+    private HashMap<String, TransactionType> tradeDirectionMap() {
+        HashMap<String, TransactionType> tradeDirection = new HashMap<>();
+        tradeDirection.put("Buy", TransactionType.Deposit);
+        tradeDirection.put("Sell", TransactionType.Withdraw);
+        return tradeDirection;
+    }
+
+    @Override
+    protected TransactionImport entryToEntity(String[] entry) {
+        var typeMapping = typeMap();
+        var tradeDirection = tradeDirectionMap();
         TransactionImport transaction = new TransactionImport();
         var type = typeMapping.get(entry[1]);
         if (type == TransactionType.Trade){
@@ -104,58 +91,23 @@ public class CoinbaseImport implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
         try {
-            try {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            }
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         } catch (Exception ex) {
+            log.info("Casting into ISO_DATA_TIME not possible, take dd.MM.yy HH:mm instead");
+            formatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         }
+
         transaction.setDateTime(dateTime);
 
         return transaction;
-    }
-
-    private List<TransactionImport> convertToEntities(ArrayList<String[]> entries) {
-        List<TransactionImport> transactions = new ArrayList<>();
-        for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
-        }
-        return transactions;
-    }
-
-    private void persistImport() {
-        if (!this.importEntities.isEmpty()) {
-            importRepository.saveAll(this.importEntities);
-        }
-    }
-
-    @Override
-    public void importFile(File file) {
-        initDictionaries();
-        csvReader.setStringDelimiter("\"");
-        var test = csvReader.getStringDelimiter();
-        csvReader.Import(file);
-        /* only for generating new Template of import
-        String[] header = csvReader.getHeader();*/
-        ArrayList<String[]> entries = csvReader.getEntries();
-        importEntities = convertToEntities(entries);
-        persistImport();
-        System.out.println("Import Successfull");
     }
 
     @Override
     public String getName(){
         return "Coinbase";
     }
-
-    @Override
-    public String toString(){
-        return getName();
-    }
-
-
 }

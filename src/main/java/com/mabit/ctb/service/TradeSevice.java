@@ -11,23 +11,20 @@ public class TradeSevice {
     @Autowired
     private  CurrencyRepository currencyRepository;
 
-
-    public void AddCurrency(Currency currency){
+    public void addCurrency(Currency currency){
         currencyRepository.save(currency);
     }
 
-    public void AddCurrency(String ticker, String name){
+    public void addCurrency(String ticker, String name){
         var currency = new Currency(ticker, name);
-        AddCurrency(currency);
+        addCurrency(currency);
     }
 
-    public Iterable<Currency> GetAllCurrency(){
+    public Iterable<Currency> getAllCurrency(){
         return currencyRepository.findAll();
     }
 
-    public Currency GetCurrencyByTicker(String ticker){
+    public Currency getCurrencyByTicker(String ticker){
         return currencyRepository.findByTicker(ticker);
     }
-
-
 }

@@ -2,7 +2,6 @@ package com.mabit.ctb.entity.report;
 
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Location;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "Gain")
-public class Gain implements Serializable {
+public class Gain {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,16 +50,4 @@ public class Gain implements Serializable {
 
     private Double profit;
 
-    public Gain(Double ammount, Currency currency, LocalDateTime inDateTime, LocalDateTime outDateTime, String shortLong, Location buyAt, Location sellAt, Double proceeds, Double costbasis, Double profit) {
-        this.ammount = ammount;
-        this.currency = currency;
-        this.inDateTime = inDateTime;
-        this.outDateTime = outDateTime;
-        this.shortLong = shortLong;
-        this.buyAt = buyAt;
-        this.sellAt = sellAt;
-        this.proceeds = proceeds;
-        this.costbasis = costbasis;
-        this.profit = profit;
-    }
 }

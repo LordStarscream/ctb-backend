@@ -4,7 +4,6 @@ import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Location;
 import com.mabit.ctb.types.TransactionType;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "Income")
-public class Donation implements Serializable {
+public class Donation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,15 +47,4 @@ public class Donation implements Serializable {
     // Wert bei eingang in EUR
     private Double worthAtOut;
 
-    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String CostBaseCalculation,
-            Double CostBase, Location outAt, TransactionType type, Double worthAtOut) {
-        this.ammount = ammount;
-        this.currency = currency;
-        this.outDateTime = outDateTime;
-        this.CostBaseCalculation = CostBaseCalculation;
-        this.CostBase = CostBase;
-        this.outAt = outAt;
-        this.type = type;
-        this.worthAtOut = worthAtOut;
-    }
 }

@@ -2,6 +2,7 @@ package com.mabit.ctb.entity.report;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -32,7 +33,7 @@ public class ReportContainer {
         return donations;
     }
 
-    public HashMap<String, List<Hold>> getHold() {
+    public Map<String, List<Hold>> getHold() {
         return hold;
     }
 

@@ -1,15 +1,12 @@
 package com.mabit.ctb.file;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.types.TransactionType;
-import com.mabit.ctb.repository.LocationRepository;
-import com.mabit.ctb.repository.TransactionImportRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -17,19 +14,10 @@ import org.springframework.stereotype.Service;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Slf4j
 @Service
 @Qualifier("Bybit_Derivatives")
-public class ByBitDerivativesImport implements FileImport{
-
-    @Autowired
-    private CsvReader csvReader;
-    @Autowired
-    private TransactionImportRepository importRepository;
-    private List<TransactionImport> importEntities;
-
-    public List<TransactionImport> getImportEntities() {
-        return importEntities;
-    }
+public class ByBitDerivativesImport extends FileImport{
 
     private TransactionType getType(String guv) { //gewin und verlust
         if (guv.startsWith("-"))
@@ -48,7 +36,8 @@ public class ByBitDerivativesImport implements FileImport{
         return Parse.stringToDouble(val);
     }
 
-    private TransactionImport entryToEntity(String[] entry) {
+    @Override
+    protected TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
         var guv = entry[5];
         var contracts = entry[0];
@@ -77,6 +66,7 @@ public class ByBitDerivativesImport implements FileImport{
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             dateTime = LocalDateTime.parse(timeField, formatter);
         } catch (Exception ex) {
+            log.info("Casting into defined format not possible, take ISO_DATA_TIME instead");
             formatter = DateTimeFormatter.ISO_DATE_TIME;
             dateTime = LocalDateTime.parse(timeField, formatter);
         }
@@ -85,40 +75,9 @@ public class ByBitDerivativesImport implements FileImport{
         return transaction;
     }
 
-    private List<TransactionImport> convertToEntities(ArrayList<String[]> entries) {
-        List<TransactionImport> transactions = new ArrayList<>();
-        for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
-        }
-        return transactions;
-    }
-
-    private void persistImport() {
-        if (!this.importEntities.isEmpty()) {
-            importRepository.saveAll(this.importEntities);
-        }
-    }
-
-    @Override
-    public void importFile(File file) {
-        csvReader.setStringDelimiter("\"");
-        var test = csvReader.getStringDelimiter();
-        csvReader.Import(file);
-        ArrayList<String[]> entries = csvReader.getEntries();
-        importEntities = convertToEntities(entries);
-        persistImport();
-        System.out.println("Import Successfull");
-    }
-
     @Override
     public String getName(){
         return "Bybit PNL";
     }
-
-    @Override
-    public String toString(){
-        return getName();
-    }
-
 
 }

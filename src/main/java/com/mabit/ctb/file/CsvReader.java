@@ -6,28 +6,31 @@ package com.mabit.ctb.file;
  */
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
-
+@Slf4j
 @Component
 public class CsvReader {
 
     public CsvReader() {
         delimiter = ",";
         stringDelimiter = "";
-        entries = new ArrayList<String[]>();
+        entries = new ArrayList<>();
     }
 
-    public ArrayList<String[]> getEntries() {
+    public List<String[]> getEntries() {
         return entries;
     }
 
@@ -69,13 +72,11 @@ public class CsvReader {
         return header;
     }
 
-    public void Import(File file) {
-        this.entries = new ArrayList<String[]>();
-        BufferedReader br = null;
+    public void importFile(InputStream inputStream) {
+        this.entries = new ArrayList<>();
         String line = "";
         boolean firstLine = true;
-        try {
-            br = new BufferedReader(new FileReader(file));
+        try(BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
             while ((line = br.readLine()) != null) {
                 //use comma as separator
                 String cleanedLine = line.replaceAll(stringDelimiter,"");
@@ -89,19 +90,8 @@ public class CsvReader {
                     this.entries.add(csvLine);
                 }
             }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            log.error("Import failed", e);
         }
     }
 

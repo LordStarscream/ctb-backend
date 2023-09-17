@@ -1,14 +1,12 @@
 package com.mabit.ctb.file;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.types.TransactionType;
-import com.mabit.ctb.repository.TransactionImportRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -16,20 +14,10 @@ import org.springframework.stereotype.Service;
  *
  * @author Mario Bittner <MarioBittner@gmx.de>
  */
+@Slf4j
 @Service
 @Qualifier("PhemexUSDCorrection")
-public class PhemexUSDCorrection implements FileImport{
-
-    @Autowired
-    private CsvReader csvReader;
-    @Autowired
-    private TransactionImportRepository importRepository;
-    private List<TransactionImport> importEntities;
-
-
-    public List<TransactionImport> getImportEntities() {
-        return importEntities;
-    }
+public class PhemexUSDCorrection extends FileImport{
 
     private TransactionType getType(String type, String value){
         if (type.equals("Bonus"))
@@ -50,7 +38,8 @@ public class PhemexUSDCorrection implements FileImport{
         return Parse.stringToDouble(a[0]);
     }
 
-    private TransactionImport entryToEntity(String[] entry) {
+    @Override
+    protected TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
         var type = getType(entry[2],entry[3]);
         transaction.setType(getType(entry[2],entry[3]));
@@ -75,16 +64,16 @@ public class PhemexUSDCorrection implements FileImport{
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
         try {
-            try {
-                formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            } catch (Exception ex) {
-                formatter = DateTimeFormatter.ISO_DATE_TIME;
-                dateTime = LocalDateTime.parse(entry[0], formatter);
-            }
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         } catch (Exception ex) {
+            log.info("Casting into defined format not possible, take ISO_DATA_TIME instead");
+            formatter = DateTimeFormatter.ISO_DATE_TIME;
+            dateTime = LocalDateTime.parse(entry[0], formatter);
         }
+
         transaction.setDateTime(dateTime);
         transaction.setFee(0.00);
         transaction.setFeeCurrency("");
@@ -92,38 +81,9 @@ public class PhemexUSDCorrection implements FileImport{
         return transaction;
     }
 
-    private List<TransactionImport> convertToEntities(ArrayList<String[]> entries) {
-        List<TransactionImport> transactions = new ArrayList<>();
-        for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
-        }
-        return transactions;
-    }
-
-    private void persistImport() {
-        if (!this.importEntities.isEmpty()) {
-            importRepository.saveAll(this.importEntities);
-        }
-    }
-
-    @Override
-    public void importFile(File file) {
-        csvReader.setStringDelimiter("\"");
-        var test = csvReader.getStringDelimiter();
-        csvReader.Import(file);
-        ArrayList<String[]> entries = csvReader.getEntries();
-        importEntities = convertToEntities(entries);
-        persistImport();
-        System.out.println("Import Successfull");
-    }
-
     @Override
     public String getName(){
         return "Phemex USD Correction";
     }
 
-    @Override
-    public String toString(){
-        return getName();
-    }
 }

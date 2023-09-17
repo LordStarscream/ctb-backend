@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -50,19 +49,4 @@ public class TransactionImport  {
 
     private String comment;
 
-
-    public TransactionImport(TransactionType type, String exchange, Double inValue, String inCurrency, Double outValue, String outCurrency, Double fee, String feeCurrency, FiatExchangeRate inFiatExchange, FiatExchangeRate outFiatExchange, LocalDateTime dateTime, String comment) {
-        this.type = type;
-        this.exchange = exchange;
-        this.inValue = inValue;
-        this.inCurrency = inCurrency;
-        this.outValue = outValue;
-        this.outCurrency = outCurrency;
-        this.fee = fee;
-        this.feeCurrency = feeCurrency;
-        this.inFiatExchange = inFiatExchange;
-        this.outFiatExchange = outFiatExchange;
-        this.dateTime = dateTime;
-        this.comment = comment;
-    }
 }
