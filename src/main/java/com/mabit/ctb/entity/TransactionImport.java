@@ -39,12 +39,6 @@ public class TransactionImport  {
 
     private String feeCurrency;
 
-    @OneToOne(orphanRemoval = false)
-    private FiatExchangeRate inFiatExchange;
-
-    @OneToOne(orphanRemoval = false)
-    private FiatExchangeRate outFiatExchange;
-
     private LocalDateTime dateTime;
 
     private String comment;

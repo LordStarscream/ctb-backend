@@ -11,9 +11,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.file.FileImport;
 import com.mabit.ctb.service.FileService;
 
@@ -27,15 +31,21 @@ public class FileController {
     private List<FileImport> importServices;
 
     @PostMapping(value = "/file/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadFile(
+    public ResponseEntity<Map<String, String>> uploadFile(
         @RequestParam MultipartFile file,
         @RequestParam String importFormat) {
         try{
             fileService.importFile(file, importFormat);
-            return ResponseEntity.ok("Datei erfolgreich hochgeladen und gespeichert");
+            return ResponseEntity.ok(createJsonResponse("Datei erfolgreich hochgeladen und gespeichert"));
         }catch(IOException ex){
-            return ResponseEntity.status((HttpStatus.INTERNAL_SERVER_ERROR)).body("Fehler beim Speichern der Datei: " + ex.getMessage());
+            return ResponseEntity.status((HttpStatus.INTERNAL_SERVER_ERROR)).body(createJsonResponse("Fehler beim Speichern der Datei: " + ex.getMessage()));
         }
+    }
+
+    private Map<String,String> createJsonResponse(String message){
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return response;
     }
 
     @GetMapping("/file/importTypes")
@@ -43,6 +53,11 @@ public class FileController {
         return importServices.stream()
             .map(FileImport::getName)
             .collect(Collectors.toList());
+    }
+
+    @GetMapping("/file/transactionImports")
+    public Iterable<TransactionImport> getTransactionImports(){
+        return fileService.getAllTransactionImports();
     }
 
 }
