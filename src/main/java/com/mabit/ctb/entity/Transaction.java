@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "Transaction")
-public class WalletTransaction{
+public class Transaction{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,7 +62,7 @@ public class WalletTransaction{
 
     private String comment;
 
-    public WalletTransaction(Trade trade, TradeDirection direction) {
+    public Transaction(Trade trade, TradeDirection direction) {
         this.updateTransaction(trade, direction);
     }
 

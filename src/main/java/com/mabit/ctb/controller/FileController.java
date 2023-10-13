@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.file.FileImport;
 import com.mabit.ctb.service.FileService;
 
@@ -53,11 +52,6 @@ public class FileController {
         return importServices.stream()
             .map(FileImport::getName)
             .collect(Collectors.toList());
-    }
-
-    @GetMapping("/file/transactionImports")
-    public Iterable<TransactionImport> getTransactionImports(){
-        return fileService.getAllTransactionImports();
     }
 
 }

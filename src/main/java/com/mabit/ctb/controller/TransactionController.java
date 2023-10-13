@@ -23,4 +23,5 @@ public class TransactionController {
     public void createCurrency(String name, String ticker) {
         tradeService.addCurrency(ticker, name);
    }
+
 }
