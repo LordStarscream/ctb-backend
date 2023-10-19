@@ -42,23 +42,7 @@ public class AssetCoingekoConsumer {
         this.url = url;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
-    }
-
-    public void setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    public void getCurrencyNames(){
+    private void getCurrencyNames(){
         try{
             currenciesJson = restTemplate.getForObject(listUrl, String.class);
             log.debug("Currencies name Json: "+currenciesJson);
@@ -67,7 +51,7 @@ public class AssetCoingekoConsumer {
         }
     }
 
-    public void getCurrencyRates(String requestUrl){
+    private void getCurrencyRates(String requestUrl){
         try{
             ratesJson = restTemplate.getForObject(requestUrl, String.class);
             log.info("requesting Json: "+ ratesJson);
@@ -103,12 +87,7 @@ public class AssetCoingekoConsumer {
         return currencyName;
     }
 
-    public String getCurrencyGeckoName(Currency currency){
-        return getCurrencyName(currency.getTicker()).toLowerCase();
-    }
-
-
-    public String getCurrencyGeckoId(Currency currency) throws NullPointerException{
+    private String getCurrencyGeckoId(Currency currency) throws NullPointerException{
         if ((currenciesJson == null) || (currenciesJson.isEmpty())){
             getCurrencyNames();
         }

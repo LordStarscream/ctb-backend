@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mabit.ctb.beans.TransactionImportInfo;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.service.TradeImportService;
 
@@ -17,4 +18,9 @@ public class TradeImportController {
     public Iterable<TransactionImport> getTransactionImports(){
         return tradeImportService.getAllTransactionImports();
     }
+
+    @GetMapping("/transactionImports/importAll")
+    public Iterable<TransactionImportInfo> executeImportTransactions(){
+        return tradeImportService.importTransactions(true);
+   }
 }

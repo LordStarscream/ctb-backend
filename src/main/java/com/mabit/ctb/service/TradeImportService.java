@@ -1,10 +1,13 @@
 package com.mabit.ctb.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +46,7 @@ public class TradeImportService {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private FiatExchangeRateService fiatExchangeRateService;
+    private CurrencyExchangeService currencyExchangeService;
 
     // Set current base Fiat Currency out of config
     @Value("${spring.application.config.currency}")
@@ -64,6 +67,7 @@ public class TradeImportService {
         return resultList;
     }
 
+    @Transactional
     private TransactionImportInfo checkImport(TransactionImport transactionImport, Boolean autoFiat) {
         TransactionImportInfo transactionInfo = new TransactionImportInfo();
         transactionInfo.setImportSuccess(true);
@@ -97,35 +101,30 @@ public class TradeImportService {
 
             //Fee is not set and is Null .. why by spot import phemex ?
             if (!transactionImport.getFeeCurrency().isEmpty() && transactionImport.getFee() != null) {
-                Currency feeCurrency = currencyRepository.findByTicker(transactionImport.getFeeCurrency());
-                if (feeCurrency == null) {
-                    transactionInfo.setImportSuccess(false);
-                    transactionInfo.getCurrency().add(feeCurrency);
-                }else{
-                    transaction.setFeeCurrency(feeCurrency);
-                    transaction.setFee(transactionImport.getFee());
-                }
+                Currency feeCurrency = getCurrency(transactionImport.getFeeCurrency());
+                transaction.setFeeCurrency(feeCurrency);
+                transaction.setFee(transactionImport.getFee());
             }
 
             /* all Types that not having only out values, so all in and also transactions with both*/
             if (inOnly.contains(transactionImport.getType())) {
                 if (!transactionImport.getInCurrency().isEmpty()) {
-                    Currency inCurrency = currencyRepository.findByTicker(transactionImport.getInCurrency());
+                    Currency inCurrency = getCurrency(transactionImport.getInCurrency());
                     transaction.setInCurrency(inCurrency);
                     transaction.setInValue(transactionImport.getInValue());
                 }
                 if (needFiat.contains(transactionImport.getType()) &&
-                        (!transaction.getInCurrency().equals(getFiatCurrency()))) { //auslagern in methode, nur für welche die fiat benötigen und bei transaction bei einer mit fiat die rate direkt nehmen
+                        (!transaction.getInCurrency().equals(getFiatCurrency()))) { //TODO auslagern in methode, nur für welche die fiat benötigen und bei transaction bei einer mit fiat die rate direkt nehmen
                     TransactionInfo sellInfo
                             = new TransactionInfo(TradeDirection.Sell, transaction.getInCurrency(), transaction.getInValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                    FiatExchangeRate sellExchangeRate = fiatExchangeRateService.checkFiatRate(sellInfo, autoFiat);
+                    FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
                     transaction.setInFiatExchange(sellExchangeRate);
                 }
             }
             /* all Types that not having only in values, so all out and also transactions with both*/
             if (outOnly.contains(transactionImport.getType())) {
                 if (!transactionImport.getOutCurrency().isEmpty()) {
-                    Currency outCurrency = currencyRepository.findByTicker(transactionImport.getOutCurrency());
+                    Currency outCurrency = getCurrency(transactionImport.getOutCurrency());
                     transaction.setOutCurrency(outCurrency);
                     transaction.setOutValue(transactionImport.getOutValue());
                 }
@@ -133,19 +132,19 @@ public class TradeImportService {
                         (!transaction.getOutCurrency().equals(getFiatCurrency()))) {
                     TransactionInfo buyInfo
                             = new TransactionInfo(TradeDirection.Buy, transaction.getOutCurrency(), transaction.getOutValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                    FiatExchangeRate buyExchangeRate = fiatExchangeRateService.checkFiatRate(buyInfo, autoFiat);
+                    FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
                     transaction.setOutFiatExchange(buyExchangeRate);
                 }
             }
             /* Transaction now in own part .. TODO should completley be overthought */
             if (transactionImport.getType().equals(TransactionType.Trade)){
                 if (!transactionImport.getInCurrency().isEmpty()) { //should always be set in a trade
-                    Currency inCurrency = currencyRepository.findByTicker(transactionImport.getInCurrency());
+                    Currency inCurrency = getCurrency(transactionImport.getInCurrency());
                     transaction.setInCurrency(inCurrency);
                     transaction.setInValue(transactionImport.getInValue());
                 }
                 if (!transactionImport.getOutCurrency().isEmpty()) { //should always be set in a trade
-                    Currency outCurrency = currencyRepository.findByTicker(transactionImport.getOutCurrency());
+                    Currency outCurrency = getCurrency(transactionImport.getOutCurrency());
                     transaction.setOutCurrency(outCurrency);
                     transaction.setOutValue(transactionImport.getOutValue());
                 }
@@ -158,7 +157,7 @@ public class TradeImportService {
                             transaction.getExchange(),
                             factor,
                             transaction.getDateTime());
-                    rate = fiatExchangeRateService.save(rate);
+                    rate = currencyExchangeService.save(rate);
                     transaction.setInFiatExchange(rate);
                 }else{
                     if (transaction.getInCurrency().equals(getFiatCurrency())) {
@@ -169,17 +168,17 @@ public class TradeImportService {
                                 transaction.getExchange(),
                                 factor,
                                 transaction.getDateTime());
-                        rate = fiatExchangeRateService.save(rate);
+                        rate = currencyExchangeService.save(rate);
                         transaction.setOutFiatExchange(rate);
                     }else{
                         TransactionInfo buyInfo
                                 = new TransactionInfo(TradeDirection.Buy, transaction.getOutCurrency(), transaction.getOutValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                        FiatExchangeRate buyExchangeRate = fiatExchangeRateService.checkFiatRate(buyInfo, autoFiat);
+                        FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
                         transaction.setOutFiatExchange(buyExchangeRate);
 
                         TransactionInfo sellInfo
                                 = new TransactionInfo(TradeDirection.Sell, transaction.getInCurrency(), transaction.getInValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                        FiatExchangeRate sellExchangeRate = fiatExchangeRateService.checkFiatRate(sellInfo, autoFiat);                        
+                        FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
                         transaction.setInFiatExchange(sellExchangeRate);
                     }
                 }
@@ -197,14 +196,18 @@ public class TradeImportService {
         return transactionInfo;
     }
 
-    private Currency checkCurrency(String ticker) {
+    private Currency getCurrency(String ticker){
         Currency currency = currencyRepository.findByTicker(ticker);
+        if (currency == null) {
+            //try to get the name from exchange api
+            currency = currencyExchangeService.getCurrency(ticker);
+        }
         return currency;
     }
 
     private Currency getFiatCurrency() {
         if (fiatCurrency==null)
-            fiatCurrency = checkCurrency(this.fiatCurrencyTicker);
+            fiatCurrency = getCurrency(this.fiatCurrencyTicker);
         return fiatCurrency;
     }
 }
