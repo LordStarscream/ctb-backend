@@ -9,7 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,31 +31,31 @@ public class Transaction{
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Location exchange;
 
     private Double inValue;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency inCurrency;
 
     private Double outValue;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency outCurrency;
 
     private Double fee;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency feeCurrency;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Trade trade;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private FiatExchangeRate inFiatExchange;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private FiatExchangeRate outFiatExchange;
 
     private LocalDateTime dateTime;

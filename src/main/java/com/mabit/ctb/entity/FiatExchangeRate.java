@@ -21,13 +21,13 @@ public class FiatExchangeRate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency cryptoCurrency;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency fiatCurrency;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Location exchange;
 
     private Double factor;

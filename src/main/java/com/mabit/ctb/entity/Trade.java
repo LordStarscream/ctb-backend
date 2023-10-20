@@ -22,20 +22,20 @@ public class Trade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Location exchange;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency currency;
 
     private Double value;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency buyCurrency;
 
     private Double buyValue;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency sellCurrency;
 
     private Double sellValue;

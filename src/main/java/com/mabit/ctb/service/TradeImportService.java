@@ -3,6 +3,7 @@ package com.mabit.ctb.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,6 +66,17 @@ public class TradeImportService {
             resultList.add(checkImport(transactionImport, autoFiatRate));
         }
         return resultList;
+    }
+
+    @Transactional
+    private FiatExchangeRate createFiatExchangeRate(Currency cryptCurrency, Currency fiatCurrency, Location location, Double factor, LocalDateTime dateTime){
+        try{
+            var rate = new FiatExchangeRate(cryptCurrency, fiatCurrency, location, factor, dateTime);
+            return currencyExchangeService.save(rate);
+        }catch(Exception ex){
+            log.error("Not able to add FiatExchangeRate",ex);
+            return null;
+        }
     }
 
     @Transactional
@@ -151,24 +163,22 @@ public class TradeImportService {
                 //always needs fiat
                 if (transaction.getOutCurrency().equals(getFiatCurrency())){
                     var factor = transaction.getOutValue() / transaction.getInValue();
-                    var rate = new FiatExchangeRate(
+                    FiatExchangeRate rate = createFiatExchangeRate(
                             transaction.getInCurrency(),
                             transaction.getOutCurrency(), //fiatCurrency
                             transaction.getExchange(),
                             factor,
                             transaction.getDateTime());
-                    rate = currencyExchangeService.save(rate);
                     transaction.setInFiatExchange(rate);
                 }else{
                     if (transaction.getInCurrency().equals(getFiatCurrency())) {
                         var factor = transaction.getInValue() / transaction.getOutValue();
-                        var rate = new FiatExchangeRate(
+                        FiatExchangeRate rate = createFiatExchangeRate(
                                 transaction.getInCurrency(),
                                 transaction.getOutCurrency(), //fiatCurrency
                                 transaction.getExchange(),
                                 factor,
                                 transaction.getDateTime());
-                        rate = currencyExchangeService.save(rate);
                         transaction.setOutFiatExchange(rate);
                     }else{
                         TransactionInfo buyInfo
