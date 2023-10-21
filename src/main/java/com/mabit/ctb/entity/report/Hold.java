@@ -7,7 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,14 +28,22 @@ public class Hold {
 
     private Double ammount;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Currency inCurrency;
 
     private LocalDateTime dateTime;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Location location;
 
     private Double factor;
+
+    public Hold(Double ammount, Currency inCurrency, LocalDateTime dateTime, Location location, Double factor) {
+        this.ammount = ammount;
+        this.inCurrency = inCurrency;
+        this.dateTime = dateTime;
+        this.location = location;
+        this.factor = factor;
+    }
 
 }

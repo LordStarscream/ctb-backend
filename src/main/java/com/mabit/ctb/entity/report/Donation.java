@@ -47,4 +47,15 @@ public class Donation {
     // Wert bei eingang in EUR
     private Double worthAtOut;
 
+    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String CostBaseCalculation, Double CostBase, Location outAt, TransactionType type, Double worthAtOut) {
+        this.ammount = ammount;
+        this.currency = currency;
+        this.outDateTime = outDateTime;
+        this.CostBaseCalculation = CostBaseCalculation;
+        this.CostBase = CostBase;
+        this.outAt = outAt;
+        this.type = type;
+        this.worthAtOut = worthAtOut;
+    }
+
 }

@@ -61,13 +61,13 @@ public class Trade {
 
     private String comment;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private FiatExchangeRate buyFiatExchange;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private FiatExchangeRate sellFiatExchange;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private FiatExchangeRate tradeFiatExchange;
 
     @OneToMany(orphanRemoval = true)

@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  *
- * @author mario
+ * @author Mario Bittner
  */
 public class ReportContainer {
     private List<Gain> gains;

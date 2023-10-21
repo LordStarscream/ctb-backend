@@ -7,7 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +28,7 @@ public class Gain {
 
     private Double ammount;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Currency currency;
 
     private LocalDateTime inDateTime;
@@ -37,10 +37,10 @@ public class Gain {
 
     private String shortLong;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Location buyAt;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Location sellAt;
 
     // Erlös
@@ -49,5 +49,18 @@ public class Gain {
     private Double costbasis;
 
     private Double profit;
+
+    public Gain(Double ammount, Currency currency, LocalDateTime inDateTime, LocalDateTime outDateTime, String shortLong, Location buyAt, Location sellAt, Double proceeds, Double costbasis, Double profit) {
+        this.ammount = ammount;
+        this.currency = currency;
+        this.inDateTime = inDateTime;
+        this.outDateTime = outDateTime;
+        this.shortLong = shortLong;
+        this.buyAt = buyAt;
+        this.sellAt = sellAt;
+        this.proceeds = proceeds;
+        this.costbasis = costbasis;
+        this.profit = profit;
+    }
 
 }
