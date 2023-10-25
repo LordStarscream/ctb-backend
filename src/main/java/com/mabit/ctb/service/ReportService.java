@@ -16,9 +16,11 @@ import com.mabit.ctb.entity.report.Donation;
 import com.mabit.ctb.entity.report.Gain;
 import com.mabit.ctb.entity.report.Hold;
 import com.mabit.ctb.entity.report.Income;
+import com.mabit.ctb.entity.report.Report;
 import com.mabit.ctb.entity.report.ReportContainer;
 import com.mabit.ctb.exception.ReportException;
 import com.mabit.ctb.file.Representation;
+import com.mabit.ctb.repository.ReportRepository;
 import com.mabit.ctb.repository.TransactionRepository;
 import com.mabit.ctb.types.TransactionType;
 
@@ -33,6 +35,11 @@ public class ReportService {
 
     @Autowired
     AccountService accountService;
+
+    @Autowired
+    ReportRepository reportRepository;
+
+    private static HashMap<Integer, Report> usedReports = new HashMap<>();
 
     private static final Double zeroLimit = 0.0000000000003;
 
@@ -52,74 +59,73 @@ public class ReportService {
         return existingTradeYears;
     }
 
-    public void generateReportEntry(){
-
-    }
-
-    private void createReport(Integer year) throws ReportException {
+    public void createReportEntries() throws ReportException {
         Currency fiatCurrency = accountService.getBaseFiatCurrency();
         List<Transaction> transactions = transactionRepository.findByOrderByDateTimeAsc();
         HashMap<String, List<Hold>> hold = new HashMap<>();
-        List<Gain> report = new ArrayList<>();
+        List<Gain> gains = new ArrayList<>(); // was report
         List<Donation> donations = new ArrayList<>();
         List<Income> incomes = new ArrayList<>();
 
-        for (Transaction w : transactions) {
-            boolean hasOut = (w.getOutCurrency() != null);
-            boolean hasIn = (w.getInCurrency() != null);
-            String inCurrency = (hasIn) ? w.getInCurrency().getTicker() + "=" + w.getInValue() : "empty";
-            String outCurrency = (hasOut) ? w.getOutCurrency().getTicker() + "=" + w.getOutValue() : "empty";
-            String fee = (w.getFee() != null) ? w.getFee() + " " + w.getFeeCurrency().getTicker() : "";
-            log.debug("*** {} *** at: {}", w.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME), w.getExchange().getName());
+        for (Transaction transaction : transactions) {
+            boolean hasOut = (transaction.getOutCurrency() != null);
+            boolean hasIn = (transaction.getInCurrency() != null);
+            String inCurrency = (hasIn) ? transaction.getInCurrency().getTicker() + "=" + transaction.getInValue() : "empty";
+            String outCurrency = (hasOut) ? transaction.getOutCurrency().getTicker() + "=" + transaction.getOutValue() : "empty";
+            String fee = (transaction.getFee() != null) ? transaction.getFee() + " " + transaction.getFeeCurrency().getTicker() : "";
+            log.debug("*** {} *** at: {}", transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME), transaction.getExchange().getName());
             log.debug("inCurrency= " + inCurrency + ", outCurrency= " + outCurrency + ", Fee= " + fee);
             if (hasOut) {
-                if (w.getOutCurrency().equals(fiatCurrency)) {
-                    log.trace("Einzahlung in Euro");
+                if (transaction.getOutCurrency().equals(fiatCurrency)) {
+                    log.trace("Einzahlung in FiatCurrency (Euro)");
                     if (hasIn) {
-                        addToHoldings(hold, w);
+                        log.trace("Einkauf {am} {cur} für FiatCurrency ",transaction.getInValue(),transaction.getInCurrency().getTicker());
+                        addToHoldings(hold, transaction);
                     }
                 } else { // könnte alles zusammen, interessiert nicht ob in euro oder nicht hauptsache hinzugefügt, wenn anders entfernt dann im hasIn abschnitt abhandeln
-                    log.trace("Kauf/Trade in " + w.getOutCurrency().getTicker());
-                    if ((hasIn) && !(w.getInCurrency().equals(fiatCurrency))) //Auszahlungen in Euro .. Euro muss nicht in die Liste
+                    log.trace("Kauf/Trade in {cur}", transaction.getOutCurrency().getTicker());
+                    if ((hasIn) && !(transaction.getInCurrency().equals(fiatCurrency))) //Auszahlungen in Euro .. Euro muss nicht in die Liste
                     {
-                        addToHoldings(hold, w);
+                        log.trace("Einkauf {am} {cur} für {outam} {outcur} ",transaction.getInValue(),transaction.getInCurrency().
+                            getTicker(),transaction.getOutValue(),transaction.getOutCurrency().getTicker());
+                        addToHoldings(hold, transaction);
                     }
                 }
                 if (!hasIn) {
                     log.trace("Abgezogen von Verschiebung / Verschenkt");
-                    log.trace("Before reduce hold ammount= " + getHolding(hold, w.getOutCurrency()).get(0).getAmmount());
-                    if (w.getType() == TransactionType.Donation) {
-                        addDonation(donations, hold, w, year);
+                    log.trace("Before reduce hold ammount= " + getHolding(hold, transaction.getOutCurrency()).get(0).getAmmount());
+                    if (transaction.getType() == TransactionType.Donation) {
+                        addDonation(donations, hold, transaction);//, year);
                     }
                     /* !!! OTHER PROBLEMS kann das weg da bei auszahlung ja alles runter muss bei der einzahlung ist dann einfach die gebür automatisch schon weg? */
-                    if (w.getType() == TransactionType.Withdraw) {
-                        reduceFee(hold, w);
+                    if (transaction.getType() == TransactionType.Withdraw) {
+                        reduceFee(hold, transaction);
                     }
-                    log.trace("After reduce  hold ammount= "+getHolding(hold,w.getOutCurrency()).get(0).getAmmount());
+                    log.trace("After reduce  hold ammount= "+getHolding(hold,transaction.getOutCurrency()).get(0).getAmmount());
                     //muss aus holding liste gelöscht werden.. Geschenkliste ?
                 }
             }
 
             if (hasIn) {
-                if (w.getInCurrency().equals(fiatCurrency)) {
+                if (transaction.getInCurrency().equals(fiatCurrency)) {
                     log.trace("Auszahlung in Euro");
                     if (hasOut) {
-                        addToReport(report, hold, w, year);
+                        addToReport(gains, hold, transaction);//, year);
                     }
                 } else {
-                    log.trace("Auszahlung von " + w.getInCurrency().getTicker());
-                    if ((hasOut) && !(w.getOutCurrency().equals(fiatCurrency))) //Einzahlung in Euro .. Euro muss nicht aus der Liste geholt werden
+                    log.trace("Auszahlung von " + transaction.getInCurrency().getTicker());
+                    if ((hasOut) && !(transaction.getOutCurrency().equals(fiatCurrency))) //Einzahlung in Euro .. Euro muss nicht aus der Liste geholt werden
                     {
-                        addToReport(report, hold, w, year);
+                        addToReport(gains, hold, transaction); //, year);
                     }
                 }
                 if (!hasOut) {
                     log.trace("Hinzugefügt von Verschiebung / Geschenkt / Dividente");
-                    if (w.getType() == TransactionType.Gift || w.getType() == TransactionType.Income) {
-                        addIncome(incomes, hold, w, year);
+                    if (transaction.getType() == TransactionType.Gift || w.getType() == TransactionType.Income) {
+                        addIncome(incomes, hold, transaction);//, year);
                     }
-                    if (w.getType() == TransactionType.Deposit) {
-                        reduceFee(hold, w);
+                    if (transaction.getType() == TransactionType.Deposit) {
+                        reduceFee(hold, transaction);
                     }
                 }
             }
@@ -128,33 +134,61 @@ public class ReportService {
         var reportContainer = new ReportContainer(report, incomes, donations ,hold);
     }
 
-    private List<Hold> getHolding(HashMap<String, List<Hold>> hold, Currency currency) {
+    private Report getReport(Integer year){
+        if (usedReports.containsKey(year))
+            return usedReports.get(year);
+        List<Report> reports = reportRepository.findByYear(year);
+        if (!reports.isEmpty()){
+            var report = reports.getFirst();
+            usedReports.put(year, report);
+            return reports.getFirst();
+        }
+        Report addReport = new Report(year, null);
+        addReport = reportRepository.save(addReport);
+        return addReport;
+    }
+
+    private Report getReport(Transaction transaction){
+        return getReport(transaction.getDateTime().getYear());
+    }
+
+    /*
+     * Aktuelle Holdings für eine Währung holen
+     */
+    private List<Hold> getHolding(HashMap<String, List<Hold>> holdings, Currency currency) {
         List<Hold> currencyHold;
-        if (hold.containsKey(currency.getTicker())) {
-            currencyHold = hold.get(currency.getTicker());
+        if (holdings.containsKey(currency.getTicker())) {
+            currencyHold = holdings.get(currency.getTicker());
         } else {
-            currencyHold = new ArrayList<Hold>();
-            hold.put(currency.getTicker(), currencyHold);
+            currencyHold = new ArrayList<>();
+            holdings.put(currency.getTicker(), currencyHold);
         }
         return currencyHold;
     }
 
-    private void addToHoldings(HashMap<String, List<Hold>> hold, Transaction wt) {
-        log.debug("addToHoldings: {}",wt.getInCurrency().getTicker());
-        List<Hold> currencyHold = getHolding(hold, wt.getInCurrency());
+    /*
+     * Hinzufügen neuer Hinzugefügter Werte zu einer Währung
+     */
+    private void addToHoldings(HashMap<String, List<Hold>> holdings, Transaction transaction) {
+        log.debug("addToHoldings: {}",transaction.getInCurrency().getTicker());
+        List<Hold> currencyHold = getHolding(holdings, transaction.getInCurrency());
         //Print
-        log.debug("Before Holding: {} ",getListOfHoldings(currencyHold, wt.getInCurrency()));
+        log.debug("Before Holding: {} ",getListOfHoldings(currencyHold, transaction.getInCurrency()));
         //
-        currencyHold.add(new Hold(wt.getInValue(), wt.getInCurrency(), wt.getDateTime(), wt.getExchange(), wt.getInFiatExchange().getFactor()));
+        currencyHold.add(new Hold(transaction.getInValue(), transaction.getInCurrency(), transaction.getDateTime(),
+            transaction.getExchange(), transaction.getInFiatExchange().getFactor(),getReport(transaction)));
         //Print
-        log.debug("After  Holding: {} ",getListOfHoldings(currencyHold, wt.getInCurrency()));
+        log.debug("After  Holding: {} ",getListOfHoldings(currencyHold, transaction.getInCurrency()));
         //
     }
 
-    private String getListOfHoldings(List<Hold> list, Currency c){
+    /*
+     * Listing des aktuellen Inhalts einer Währung
+     */
+    private String getListOfHoldings(List<Hold> list, Currency currency){
         Double sum = 0.0;
         StringBuilder sb = new StringBuilder();
-        sb.append(c.getTicker()).append(": ");
+        sb.append(currency.getTicker()).append(": ");
         for(Hold h:list){
             sum = sum+h.getAmmount();
             sb.append("[").append(h.getAmmount()).append("]");
@@ -163,32 +197,35 @@ public class ReportService {
         return sb.toString();
     }
 
-    private void reduceFee(HashMap<String, List<Hold>> hold, Transaction wt) {
+    /*
+     * Reine Gebühren Abzüge
+     */
+    private void reduceFee(HashMap<String, List<Hold>> holdings, Transaction transaction) {
         log.debug("REDUCE FEE");
-        if (wt.getFee() != null) {
-            log.debug("reduced At {}, with {} {} Fee",wt.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),wt.getFeeCurrency().getTicker(), wt.getFee());
-            List<Hold> currencyHold = getHolding(hold, wt.getFeeCurrency());
-            log.debug("Before Reduce: {}",getListOfHoldings(currencyHold, wt.getFeeCurrency()));
+        if (transaction.getFee() != null) {
+            log.debug("reduced At {}, with {} {} Fee",transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),transaction.getFeeCurrency().getTicker(), transaction.getFee());
+            List<Hold> currencyHold = getHolding(holdings, transaction.getFeeCurrency());
+            log.debug("Before Reduce: {}",getListOfHoldings(currencyHold, transaction.getFeeCurrency()));
             Double dif = 0.0;
             for (Iterator<Hold> cIter = currencyHold.iterator(); cIter.hasNext();) {
-                Hold h = cIter.next();
-                dif = h.getAmmount() - wt.getFee();
+                Hold hold = cIter.next();
+                dif = hold.getAmmount() - transaction.getFee();
                 log.debug("DIF= {}", dif);
                 if ((-zeroLimit <= dif) && (dif <= zeroLimit)) {
                     cIter.remove();
                     break;
                 }
                 if (dif > zeroLimit) {
-                    h.setAmmount(dif);
+                    hold.setAmmount(dif);
                     break;
                 }
                 if (dif < -zeroLimit) {
-                    wt.setFee(wt.getFee()- h.getAmmount());
+                    transaction.setFee(transaction.getFee()- hold.getAmmount());
                     cIter.remove();
                 }
             }
             //Print
-            log.debug("After Reduce: {}",getListOfHoldings(currencyHold, wt.getFeeCurrency()));
+            log.debug("After Reduce: {}",getListOfHoldings(currencyHold, transaction.getFeeCurrency()));
         }
     }
 
@@ -197,11 +234,11 @@ public class ReportService {
     }
 
     private Gain createGain(Hold hold, Transaction transaction, boolean useHoldValue) {
-        var value = useHoldValue?hold.getAmmount():transaction.getOutValue();
+        var value = useHoldValue ? hold.getAmmount() : transaction.getOutValue();
         boolean isShort = ChronoUnit.YEARS.between(hold.getDateTime(), transaction.getDateTime()) < 1;
-        var short_long = "long";
+        var shortLong = "long";
         if (isShort)
-                short_long = "short";
+                shortLong = "short";
         var proceeds = value * transaction.getOutFiatExchange().getFactor(); //auf zwei stellen runden !!
         var costbasis = value * hold.getFactor();
         var profit = proceeds - costbasis;
@@ -210,50 +247,47 @@ public class ReportService {
                 transaction.getOutCurrency(),
                 hold.getDateTime(),
                 transaction.getDateTime(),
-                short_long,
+                shortLong,
                 hold.getLocation(),
                 transaction.getExchange(),
                 proceeds,
                 costbasis,
-                profit);
+                profit,
+                getReport(transaction));
     }
 
-    private void addToReport(List<Gain> report, HashMap<String, List<Hold>> hold, Transaction wt, Integer year) throws ReportException {
-        boolean partOfReport = (year == null || wt.getDateTime().getYear() == year);
+    private void addToReport(List<Gain> gains, HashMap<String, List<Hold>> holdings, Transaction transaction) throws ReportException {
+        //boolean partOfReport = (year == null || transaction.getDateTime().getYear() == year);
         //if((year == null) || (true)) // between 01.01.year and 31.12.year
-        List<Hold> currencyHold = getHolding(hold, wt.getOutCurrency());
-        if (currencyHold.size() == 0) {
+        List<Hold> currencyHold = getHolding(holdings, transaction.getOutCurrency());
+        if (currencyHold.isEmpty()) {
             throw new ReportException("No holding for Transaction");
         }
         Double dif = 0.0;
-        var transactionDate = wt.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME);
+        var transactionDate = transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME);
         log.debug("addToReport of Transaction from {}",transactionDate);
         for (Iterator<Hold> cIter = currencyHold.iterator(); cIter.hasNext();) {
             //Print
-            log.debug("Before Holding: {}", getListOfHoldings(currencyHold, wt.getOutCurrency()));
+            log.debug("Before Holding: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));
             //
             Hold h = cIter.next();
-            if (wt.getOutCurrency().getTicker().equals("XRP")) //remove after solfing
-                log.debug("++CHECK++");
-            dif = h.getAmmount() - wt.getOutValue();
+            dif = h.getAmmount() - transaction.getOutValue();
             if ((-zeroLimit <= dif) && (dif <= zeroLimit)) {
-                log.debug("hold= " + h.getAmmount() + wt.getOutCurrency().getTicker() + " Transaction= " + wt.getOutValue() + " Fee= " + wt.getFee() + " in Currency =" + wt.getFeeCurrency());
-                if (partOfReport)
-                    report.add(createGain(h, wt));
+                log.debug("hold= " + h.getAmmount() + transaction.getOutCurrency().getTicker() + " Transaction= " + transaction.getOutValue() + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
+                gains.add(createGain(h, transaction)); // all independent of year
                 log.trace(" == 0");
-                log.trace("Ammount h = " + h.getAmmount() + wt.getOutCurrency().getTicker());
-                log.trace("Ammount wt = " + wt.getOutValue() + wt.getOutCurrency().getTicker() + " , Fee = " + wt.getFee());
+                log.trace("Ammount h = " + h.getAmmount() + transaction.getOutCurrency().getTicker());
+                log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
                 cIter.remove();
                 log.trace("Element from holding removed");
                 break;
             }
             if (dif > zeroLimit) {
-                log.debug("hold=" + h.getAmmount() + wt.getOutCurrency().getTicker() + " Transaction= " + wt.getOutValue() + " Fee= " + wt.getFee() + " in Currency =" + wt.getFeeCurrency());
-                if (partOfReport)
-                    report.add(createGain(h, wt));
+                log.debug("hold=" + h.getAmmount() + transaction.getOutCurrency().getTicker() + " Transaction= " + transaction.getOutValue() + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
+                gains.add(createGain(h, transaction)); // all independent of year
                 log.trace(" > 0");
-                log.trace("Ammount h = " + h.getAmmount() + wt.getOutCurrency().getTicker());
-                log.trace("Ammount wt = " + wt.getOutValue() + wt.getOutCurrency().getTicker() + " , Fee = " + wt.getFee());
+                log.trace("Ammount h = " + h.getAmmount() + transaction.getOutCurrency().getTicker());
+                log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
                 h.setAmmount(dif); //eventuell mit 0 zusammen.. und wenn 0 dann remove
                 //bleibt was übrig
                 log.trace("Element remains with new Ammount = " + dif);
@@ -261,31 +295,30 @@ public class ReportService {
                 break;
             }
             if (dif < -zeroLimit) {
-                log.debug("hold=" + h.getAmmount() + wt.getOutCurrency().getTicker() + " Transaction= " + wt.getOutValue() + " Fee= " + wt.getFee() + " in Currency =" + wt.getFeeCurrency());
-                if (partOfReport)
-                    report.add(createGain(h, wt, true)); //currently all trades are handled seperatly, switch if like nowerdays in tradingView
+                log.debug("hold=" + h.getAmmount() + transaction.getOutCurrency().getTicker() + " Transaction= " + transaction.getOutValue() + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
+                gains.add(createGain(h, transaction, true)); //currently all trades are handled seperatly, switch if like nowerdays in tradingView // all independent of year
                 log.trace(" < 0");
-                log.trace("Ammount h = " + h.getAmmount() + wt.getOutCurrency().getTicker());
-                log.trace("Ammount wt = " + wt.getOutValue() + wt.getOutCurrency().getTicker() + " , Fee = " + wt.getFee());
-                wt.setOutValue(wt.getOutValue() - h.getAmmount());
+                log.trace("Ammount h = " + h.getAmmount() + transaction.getOutCurrency().getTicker());
+                log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
+                transaction.setOutValue(transaction.getOutValue() - h.getAmmount());
                 cIter.remove();
-                log.trace("rest = " + (wt.getOutValue() - h.getAmmount()) + wt.getOutCurrency());
+                log.trace("rest = " + (transaction.getOutValue() - h.getAmmount()) + transaction.getOutCurrency());
                 log.debug("Element from holding removed, next round to next holding, dif=" + dif);
             }
         }
         if ((dif > zeroLimit) || (dif < -zeroLimit)) {
-            log.warn("For WalletTransaction {} no or not enaugh holding available: dif = {}",wt,dif);
-            throw new ReportException("For WalletTransaction " + wt + " no or not enaugh holding available");
+            log.warn("For WalletTransaction {} no or not enaugh holding available: dif = {}",transaction,dif);
+            throw new ReportException("For WalletTransaction " + transaction + " no or not enaugh holding available");
             // was wenn kein eintrag in h mehr vorhanden.. dann ist fehlt eine Einzahlung zur Auszahlung
         }
-        log.debug("After  Holding: {}", getListOfHoldings(currencyHold, wt.getOutCurrency()));
+        log.debug("After  Holding: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));
     }
 
-    private Donation createDonation(Hold hold, Transaction transaction) {
-        return createDonation(hold,transaction,false);
+    private Donation createDonation(Hold hold, Transaction transaction, Report report) {
+        return createDonation(hold,transaction, report, false);
     }
 
-    private Donation createDonation(Hold hold, Transaction transaction, boolean useHoldValue) {
+    private Donation createDonation(Hold hold, Transaction transaction, Report report, boolean useHoldValue) {
         var value = useHoldValue ? hold.getAmmount() : transaction.getOutValue();
         var costbasis = value * hold.getFactor();
         var costBaseText = value.toString()+" "+
@@ -300,45 +333,43 @@ public class ReportService {
                 costbasis,
                 transaction.getExchange(),
                 transaction.getType(),
-                fiatValue);
+                fiatValue,
+                report);
     }
 
-    private void addDonation(List<Donation> donations, HashMap<String, List<Hold>> hold,  Transaction wt, Integer year) {
-        boolean partOfReport = (year == null || wt.getDateTime().getYear() == year);
-        List<Hold> currencyHold = getHolding(hold, wt.getOutCurrency());
-        Double dif = 0.0;
-        log.debug("donate At {}, with {} {} Value",wt.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),wt.getFeeCurrency().getTicker(), wt.getOutValue());
+    private void addDonation(List<Donation> donations, HashMap<String, List<Hold>> holdings,  Transaction transaction) {
+        Report report = getReport(transaction);
+        //boolean partOfReport = (year == null || wt.getDateTime().getYear() == year);
+        List<Hold> currencyHold = getHolding(holdings, transaction.getOutCurrency());
+        log.debug("donate At {}, with {} {} Value",transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),transaction.getFeeCurrency().getTicker(), transaction.getOutValue());
         //Print
-        log.debug("Holding before donation: {}", getListOfHoldings(currencyHold, wt.getOutCurrency()));
+        log.debug("Holding before donation: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));
         for (Iterator<Hold> cIter = currencyHold.iterator(); cIter.hasNext();) {
-            Hold h = cIter.next();
-            dif = h.getAmmount() - wt.getOutValue();
+            Hold hold = cIter.next();
+            Double dif = hold.getAmmount() - transaction.getOutValue();
             log.debug("DIF=  {}", dif);
-            if ((-zeroLimit <= dif) && (dif <= zeroLimit)) {
-                if (partOfReport)
-                    donations.add(createDonation(h, wt));
+            if ((-zeroLimit <= dif) && (dif <= zeroLimit)){
+                donations.add(createDonation(hold, transaction, report));
                 cIter.remove();
                 break;
             }
             if (dif > zeroLimit) {
-                if (partOfReport)
-                    donations.add(createDonation(h, wt));
-                h.setAmmount(dif);
+                donations.add(createDonation(hold, transaction, report));
+                hold.setAmmount(dif);
                 break;
             }
             if (dif < -zeroLimit) {
-                if (partOfReport)
-                    donations.add(createDonation(h, wt, true));
-                wt.setOutValue(wt.getOutValue() - h.getAmmount());
+                donations.add(createDonation(hold, transaction, report, true));
+                transaction.setOutValue(transaction.getOutValue() - hold.getAmmount());
                 cIter.remove();
             }
         }
-        reduceFee(hold, wt);
+        reduceFee(holdings, transaction);
         //Print
-        log.debug("Holding after donation: {}", getListOfHoldings(currencyHold, wt.getOutCurrency()));
+        log.debug("Holding after donation: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));
     }
 
-    private Income createIncome(List<Hold> hold, Transaction transaction){
+    private Income createIncome(Transaction transaction){
         var fiatValue = transaction.getInValue() * transaction.getInFiatExchange().getFactor();
         return new Income(
                 transaction.getInValue(),
@@ -347,17 +378,13 @@ public class ReportService {
                 transaction.getExchange(),
                 transaction.getType(),
                 transaction.getComment(),
-                fiatValue
+                fiatValue,
+                getReport(transaction)
         );
     }
 
-    private void addIncome(List<Income> incomes, HashMap<String, List<Hold>> hold, Transaction wt, Integer year) {
-        boolean partOfReport = (year == null || wt.getDateTime().getYear() == year);
-        List<Hold> currencyHold = getHolding(hold, wt.getInCurrency());
-        this.addToHoldings(hold, wt);
-
-        if(partOfReport){
-            incomes.add(createIncome(currencyHold, wt));
-        }
+    private void addIncome(List<Income> incomes, HashMap<String, List<Hold>> holdings, Transaction transaction) {
+        this.addToHoldings(holdings, transaction);
+        incomes.add(createIncome(transaction));
     }
 }

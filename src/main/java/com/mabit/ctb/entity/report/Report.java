@@ -1,34 +1,35 @@
-package com.mabit.ctb.entity;
+package com.mabit.ctb.entity.report;
 
-import java.util.Locale;
+import com.mabit.ctb.entity.Account;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- *
- * @author Mario Bittner
- */
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "account")
-public class Account {
+@Table(name = "Report")
+public class Report {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-    @ManyToOne
-    private Currency referenceCurrency;
-    private Locale locale;
+    private Long id;
 
-    public Account(Currency referenceCurrency, Locale locale) {
-        this.referenceCurrency = referenceCurrency;
-        this.locale = locale;
+    private Integer year;
+
+    @ManyToOne
+    private Account account;
+
+    public Report(Integer year, Account account){
+        this.year = year;
+        this.account = account;
     }
 
 }

@@ -45,7 +45,9 @@ public class Income {
     // Wert bei eingang in EUR
     private Double worthAtIncome;
 
-    public Income(Double ammount, Currency currency, LocalDateTime inDateTime, Location inAt, TransactionType type, String info, Double worthAtIncome) {
+    private Report report;
+
+    public Income(Double ammount, Currency currency, LocalDateTime inDateTime, Location inAt, TransactionType type, String info, Double worthAtIncome, Report report) {
         this.ammount = ammount;
         this.currency = currency;
         this.inDateTime = inDateTime;
@@ -53,6 +55,7 @@ public class Income {
         this.type = type;
         this.info = info;
         this.worthAtIncome = worthAtIncome;
+        this.report = report;
     }
 
 }

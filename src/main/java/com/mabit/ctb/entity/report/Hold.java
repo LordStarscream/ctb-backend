@@ -38,12 +38,16 @@ public class Hold {
 
     private Double factor;
 
-    public Hold(Double ammount, Currency inCurrency, LocalDateTime dateTime, Location location, Double factor) {
+    @ManyToOne
+    private Report report;
+
+    public Hold(Double ammount, Currency inCurrency, LocalDateTime dateTime, Location location, Double factor, Report report) {
         this.ammount = ammount;
         this.inCurrency = inCurrency;
         this.dateTime = dateTime;
         this.location = location;
         this.factor = factor;
+        this.report = report;
     }
 
 }

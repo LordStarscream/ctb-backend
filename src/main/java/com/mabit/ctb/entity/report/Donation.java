@@ -9,7 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,16 +30,16 @@ public class Donation {
 
     private Double ammount;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Currency currency;
 
     private LocalDateTime outDateTime;
 
-    private String CostBaseCalculation;
+    private String costBaseCalculation;
 
-    private Double CostBase;
+    private Double costBase;
 
-    @OneToOne(orphanRemoval = false)
+    @ManyToOne
     private Location outAt;
 
     private TransactionType type;
@@ -47,15 +47,19 @@ public class Donation {
     // Wert bei eingang in EUR
     private Double worthAtOut;
 
-    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String CostBaseCalculation, Double CostBase, Location outAt, TransactionType type, Double worthAtOut) {
+    @ManyToOne
+    private Report report;
+
+    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String costBaseCalculation, Double costBase, Location outAt, TransactionType type, Double worthAtOut, Report report) {
         this.ammount = ammount;
         this.currency = currency;
         this.outDateTime = outDateTime;
-        this.CostBaseCalculation = CostBaseCalculation;
-        this.CostBase = CostBase;
+        this.costBaseCalculation = costBaseCalculation;
+        this.costBase = costBase;
         this.outAt = outAt;
         this.type = type;
         this.worthAtOut = worthAtOut;
+        this.report = report;
     }
 
 }

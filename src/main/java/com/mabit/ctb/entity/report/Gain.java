@@ -50,7 +50,10 @@ public class Gain {
 
     private Double profit;
 
-    public Gain(Double ammount, Currency currency, LocalDateTime inDateTime, LocalDateTime outDateTime, String shortLong, Location buyAt, Location sellAt, Double proceeds, Double costbasis, Double profit) {
+    @ManyToOne
+    private Report report;
+
+    public Gain(Double ammount, Currency currency, LocalDateTime inDateTime, LocalDateTime outDateTime, String shortLong, Location buyAt, Location sellAt, Double proceeds, Double costbasis, Double profit, Report report) {
         this.ammount = ammount;
         this.currency = currency;
         this.inDateTime = inDateTime;
@@ -61,6 +64,7 @@ public class Gain {
         this.proceeds = proceeds;
         this.costbasis = costbasis;
         this.profit = profit;
+        this.report = report;
     }
 
 }
