@@ -24,11 +24,9 @@ public class Account {
     private long id;
     @ManyToOne
     private Currency referenceCurrency;
-    private Locale locale;
 
-    public Account(Currency referenceCurrency, Locale locale) {
+    public Account(Currency referenceCurrency) {
         this.referenceCurrency = referenceCurrency;
-        this.locale = locale;
     }
 
 }

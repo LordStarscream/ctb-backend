@@ -10,6 +10,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.mabit.ctb.entity.Account;
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Transaction;
 import com.mabit.ctb.entity.report.Donation;
@@ -43,6 +44,8 @@ public class ReportService {
 
     private static final Double zeroLimit = 0.0000000000003;
 
+    private Account account = null;
+
     public List<Integer> availableReportYear() {
         List<Integer> existingTradeYears = new ArrayList<>();
         var all = transactionRepository.findAll();
@@ -66,6 +69,7 @@ public class ReportService {
         List<Gain> gains = new ArrayList<>(); // was report
         List<Donation> donations = new ArrayList<>();
         List<Income> incomes = new ArrayList<>();
+        this.account = accountService.getAccount();
 
         for (Transaction transaction : transactions) {
             boolean hasOut = (transaction.getOutCurrency() != null);
@@ -121,7 +125,7 @@ public class ReportService {
                 }
                 if (!hasOut) {
                     log.trace("Hinzugefügt von Verschiebung / Geschenkt / Dividente");
-                    if (transaction.getType() == TransactionType.Gift || w.getType() == TransactionType.Income) {
+                    if (transaction.getType() == TransactionType.Gift || transaction.getType() == TransactionType.Income) {
                         addIncome(incomes, hold, transaction);//, year);
                     }
                     if (transaction.getType() == TransactionType.Deposit) {
@@ -131,7 +135,7 @@ public class ReportService {
             }
         }
         log.debug("Hold: {}", hold);
-        var reportContainer = new ReportContainer(report, incomes, donations ,hold);
+        var reportContainer = new ReportContainer(gains, incomes, donations ,hold);
     }
 
     private Report getReport(Integer year){
@@ -143,7 +147,7 @@ public class ReportService {
             usedReports.put(year, report);
             return reports.getFirst();
         }
-        Report addReport = new Report(year, null);
+        Report addReport = new Report(year, account);
         addReport = reportRepository.save(addReport);
         return addReport;
     }

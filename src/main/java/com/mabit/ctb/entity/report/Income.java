@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -30,12 +31,12 @@ public class Income {
 
     private Double ammount;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Currency currency;
 
     private LocalDateTime inDateTime;
 
-    @OneToOne(orphanRemoval=false)
+    @ManyToOne
     private Location inAt;
 
     private TransactionType type;
@@ -45,6 +46,7 @@ public class Income {
     // Wert bei eingang in EUR
     private Double worthAtIncome;
 
+    @ManyToOne
     private Report report;
 
     public Income(Double ammount, Currency currency, LocalDateTime inDateTime, Location inAt, TransactionType type, String info, Double worthAtIncome, Report report) {

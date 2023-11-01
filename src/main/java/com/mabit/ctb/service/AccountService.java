@@ -4,11 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.mabit.ctb.entity.Account;
 import com.mabit.ctb.entity.Currency;
+import com.mabit.ctb.repository.AccountRepository;
 import com.mabit.ctb.repository.CurrencyRepository;
 
 @Service
 public class AccountService {
+    @Autowired
+    private AccountRepository accountRepository;
 
     @Autowired
     private CurrencyRepository currencyRepository;
@@ -34,6 +38,15 @@ public class AccountService {
         if (fiatCurrency==null)
             fiatCurrency = getCurrency(this.fiatCurrencyTicker);
         return fiatCurrency;
+    }
+
+    public Account getAccount(){
+        var result = accountRepository.findAll();
+        Account account = new Account(fiatCurrency);
+        if(result.iterator().hasNext() == true){
+            return result.iterator().next();
+        }
+        return accountRepository.save(account);
     }
 
 }
