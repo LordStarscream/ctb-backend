@@ -40,6 +40,9 @@ public class ReportService {
     @Autowired
     ReportRepository reportRepository;
 
+    @Autowired
+    HoldService holdingService;
+
     private static HashMap<Integer, Report> usedReports = new HashMap<>();
 
     private static final Double zeroLimit = 0.0000000000003;
@@ -84,7 +87,7 @@ public class ReportService {
                     log.trace("Einzahlung in FiatCurrency (Euro)");
                     if (hasIn) {
                         log.trace("Einkauf {am} {cur} für FiatCurrency ",transaction.getInValue(),transaction.getInCurrency().getTicker());
-                        addToHoldings(hold, transaction);
+                        holdingService.addToHoldings(transaction);
                     }
                 } else { // könnte alles zusammen, interessiert nicht ob in euro oder nicht hauptsache hinzugefügt, wenn anders entfernt dann im hasIn abschnitt abhandeln
                     log.trace("Kauf/Trade in {cur}", transaction.getOutCurrency().getTicker());
@@ -92,14 +95,14 @@ public class ReportService {
                     {
                         log.trace("Einkauf {am} {cur} für {outam} {outcur} ",transaction.getInValue(),transaction.getInCurrency().
                             getTicker(),transaction.getOutValue(),transaction.getOutCurrency().getTicker());
-                        addToHoldings(hold, transaction);
+                        holdingService.addToHoldings(transaction);
                     }
                 }
                 if (!hasIn) {
                     log.trace("Abgezogen von Verschiebung / Verschenkt");
                     log.trace("Before reduce hold ammount= " + getHolding(hold, transaction.getOutCurrency()).get(0).getAmmount());
                     if (transaction.getType() == TransactionType.Donation) {
-                        addDonation(donations, hold, transaction);//, year);
+                        addDonation(transaction);//, year);
                     }
                     /* !!! OTHER PROBLEMS kann das weg da bei auszahlung ja alles runter muss bei der einzahlung ist dann einfach die gebür automatisch schon weg? */
                     if (transaction.getType() == TransactionType.Withdraw) {
@@ -340,11 +343,11 @@ public class ReportService {
                 fiatValue,
                 report);
     }
-
-    private void addDonation(List<Donation> donations, HashMap<String, List<Hold>> holdings,  Transaction transaction) {
+/// TODO PROCEED HERE
+    private void addDonation(List<Donation> donations, Transaction transaction) {
         Report report = getReport(transaction);
-        //boolean partOfReport = (year == null || wt.getDateTime().getYear() == year);
-        List<Hold> currencyHold = getHolding(holdings, transaction.getOutCurrency());
+        List<Hold> currencyHold = holdingService.getHoldings(transaction.getOutCurrency());
+
         log.debug("donate At {}, with {} {} Value",transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),transaction.getFeeCurrency().getTicker(), transaction.getOutValue());
         //Print
         log.debug("Holding before donation: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));

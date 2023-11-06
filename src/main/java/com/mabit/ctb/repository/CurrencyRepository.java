@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import com.mabit.ctb.entity.Currency;
 
 @Repository
-public interface CurrencyRepository extends CrudRepository<Currency, Long>
+public interface CurrencyRepository extends CrudRepository<Currency, String>
 {
     /**
      *
