@@ -2,14 +2,15 @@ package com.mabit.ctb.entity.report;
 
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Location;
-import com.mabit.ctb.types.TransactionType;
-
 import java.time.LocalDateTime;
+import java.util.List;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,8 +22,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "Donation")
-public class Donation {
+@Table(name = "Withdraw")
+public class Withdraw {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,36 +31,34 @@ public class Donation {
 
     private Double ammount;
 
+    private boolean isFee;
+
     @ManyToOne
     private Currency currency;
 
-    private LocalDateTime outDateTime;
-
-    private String costBaseCalculation;
-
-    private Double costBase;
+    private LocalDateTime dateTime;
 
     @ManyToOne
-    private Location outAt;
-
-    private TransactionType type;
-
-    // Wert bei eingang in EUR
-    private Double worthAtOut;
+    private Location location;
 
     @ManyToOne
     private Report report;
 
-    public Donation(Double ammount, Currency currency, LocalDateTime outDateTime, String costBaseCalculation, Double costBase, Location outAt, TransactionType type, Double worthAtOut, Report report) {
+    @OneToMany
+    private List<Deposit> fromDeposits;
+
+    public Withdraw(Double ammount, Currency currency, LocalDateTime dateTime, Location location, Report report, List<Deposit> deposits) {
+        this(ammount,currency,dateTime,location,report,deposits,false);
+    }
+
+    public Withdraw(Double ammount, Currency currency, LocalDateTime dateTime, Location location, Report report, List<Deposit> deposits, boolean isFee) {
         this.ammount = ammount;
         this.currency = currency;
-        this.outDateTime = outDateTime;
-        this.costBaseCalculation = costBaseCalculation;
-        this.costBase = costBase;
-        this.outAt = outAt;
-        this.type = type;
-        this.worthAtOut = worthAtOut;
+        this.dateTime = dateTime;
+        this.location = location;
         this.report = report;
+        this.fromDeposits = deposits;
+        this.isFee = isFee;
     }
 
 }

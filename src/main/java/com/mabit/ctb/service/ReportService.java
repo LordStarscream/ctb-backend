@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.mabit.ctb.entity.Account;
 import com.mabit.ctb.entity.Currency;
 import com.mabit.ctb.entity.Transaction;
+import com.mabit.ctb.entity.report.Deposit;
 import com.mabit.ctb.entity.report.Donation;
 import com.mabit.ctb.entity.report.Gain;
 import com.mabit.ctb.entity.report.Hold;
@@ -80,6 +81,7 @@ public class ReportService {
             String inCurrency = (hasIn) ? transaction.getInCurrency().getTicker() + "=" + transaction.getInValue() : "empty";
             String outCurrency = (hasOut) ? transaction.getOutCurrency().getTicker() + "=" + transaction.getOutValue() : "empty";
             String fee = (transaction.getFee() != null) ? transaction.getFee() + " " + transaction.getFeeCurrency().getTicker() : "";
+            Report report = getReport(transaction);
             log.debug("*** {} *** at: {}", transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME), transaction.getExchange().getName());
             log.debug("inCurrency= " + inCurrency + ", outCurrency= " + outCurrency + ", Fee= " + fee);
             if (hasOut) {
@@ -100,15 +102,15 @@ public class ReportService {
                 }
                 if (!hasIn) {
                     log.trace("Abgezogen von Verschiebung / Verschenkt");
-                    log.trace("Before reduce hold ammount= " + getHolding(hold, transaction.getOutCurrency()).get(0).getAmmount());
+                    log.trace("Before reduce hold ammount= " + holdingService.getAvailableHoldings(transaction.getOutCurrency()).get(0).getAvailableAmmount());
                     if (transaction.getType() == TransactionType.Donation) {
-                        addDonation(transaction);//, year);
+                        holdingService.addDonation(transaction, report);
                     }
                     /* !!! OTHER PROBLEMS kann das weg da bei auszahlung ja alles runter muss bei der einzahlung ist dann einfach die gebür automatisch schon weg? */
                     if (transaction.getType() == TransactionType.Withdraw) {
-                        reduceFee(hold, transaction);
+                        holdingService.reduceFee(transaction, report);
                     }
-                    log.trace("After reduce  hold ammount= "+getHolding(hold,transaction.getOutCurrency()).get(0).getAmmount());
+                    log.trace("After reduce  hold ammount= "+ holdingService.getAvailableHoldings(transaction.getOutCurrency()).get(0).getAvailableAmmount());
                     //muss aus holding liste gelöscht werden.. Geschenkliste ?
                 }
             }
@@ -117,22 +119,22 @@ public class ReportService {
                 if (transaction.getInCurrency().equals(fiatCurrency)) {
                     log.trace("Auszahlung in Euro");
                     if (hasOut) {
-                        addToReport(gains, hold, transaction);//, year);
+                        addToReport(gains, hold, transaction);
                     }
                 } else {
                     log.trace("Auszahlung von " + transaction.getInCurrency().getTicker());
                     if ((hasOut) && !(transaction.getOutCurrency().equals(fiatCurrency))) //Einzahlung in Euro .. Euro muss nicht aus der Liste geholt werden
                     {
-                        addToReport(gains, hold, transaction); //, year);
+                        addToReport(gains, hold, transaction);
                     }
                 }
                 if (!hasOut) {
                     log.trace("Hinzugefügt von Verschiebung / Geschenkt / Dividente");
                     if (transaction.getType() == TransactionType.Gift || transaction.getType() == TransactionType.Income) {
-                        addIncome(incomes, hold, transaction);//, year);
+                        addIncome(incomes, hold, transaction);
                     }
                     if (transaction.getType() == TransactionType.Deposit) {
-                        reduceFee(hold, transaction);
+                        holdingService.reduceFee(transaction, report);
                     }
                 }
             }
@@ -157,83 +159,6 @@ public class ReportService {
 
     private Report getReport(Transaction transaction){
         return getReport(transaction.getDateTime().getYear());
-    }
-
-    /*
-     * Aktuelle Holdings für eine Währung holen
-     */
-    private List<Hold> getHolding(HashMap<String, List<Hold>> holdings, Currency currency) {
-        List<Hold> currencyHold;
-        if (holdings.containsKey(currency.getTicker())) {
-            currencyHold = holdings.get(currency.getTicker());
-        } else {
-            currencyHold = new ArrayList<>();
-            holdings.put(currency.getTicker(), currencyHold);
-        }
-        return currencyHold;
-    }
-
-    /*
-     * Hinzufügen neuer Hinzugefügter Werte zu einer Währung
-     */
-    private void addToHoldings(HashMap<String, List<Hold>> holdings, Transaction transaction) {
-        log.debug("addToHoldings: {}",transaction.getInCurrency().getTicker());
-        List<Hold> currencyHold = getHolding(holdings, transaction.getInCurrency());
-        //Print
-        log.debug("Before Holding: {} ",getListOfHoldings(currencyHold, transaction.getInCurrency()));
-        //
-        currencyHold.add(new Hold(transaction.getInValue(), transaction.getInCurrency(), transaction.getDateTime(),
-            transaction.getExchange(), transaction.getInFiatExchange().getFactor(),getReport(transaction)));
-        //Print
-        log.debug("After  Holding: {} ",getListOfHoldings(currencyHold, transaction.getInCurrency()));
-        //
-    }
-
-    /*
-     * Listing des aktuellen Inhalts einer Währung
-     */
-    private String getListOfHoldings(List<Hold> list, Currency currency){
-        Double sum = 0.0;
-        StringBuilder sb = new StringBuilder();
-        sb.append(currency.getTicker()).append(": ");
-        for(Hold h:list){
-            sum = sum+h.getAmmount();
-            sb.append("[").append(h.getAmmount()).append("]");
-        }
-        sb.append(":: ").append(sum);
-        return sb.toString();
-    }
-
-    /*
-     * Reine Gebühren Abzüge
-     */
-    private void reduceFee(HashMap<String, List<Hold>> holdings, Transaction transaction) {
-        log.debug("REDUCE FEE");
-        if (transaction.getFee() != null) {
-            log.debug("reduced At {}, with {} {} Fee",transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),transaction.getFeeCurrency().getTicker(), transaction.getFee());
-            List<Hold> currencyHold = getHolding(holdings, transaction.getFeeCurrency());
-            log.debug("Before Reduce: {}",getListOfHoldings(currencyHold, transaction.getFeeCurrency()));
-            Double dif = 0.0;
-            for (Iterator<Hold> cIter = currencyHold.iterator(); cIter.hasNext();) {
-                Hold hold = cIter.next();
-                dif = hold.getAmmount() - transaction.getFee();
-                log.debug("DIF= {}", dif);
-                if ((-zeroLimit <= dif) && (dif <= zeroLimit)) {
-                    cIter.remove();
-                    break;
-                }
-                if (dif > zeroLimit) {
-                    hold.setAmmount(dif);
-                    break;
-                }
-                if (dif < -zeroLimit) {
-                    transaction.setFee(transaction.getFee()- hold.getAmmount());
-                    cIter.remove();
-                }
-            }
-            //Print
-            log.debug("After Reduce: {}",getListOfHoldings(currencyHold, transaction.getFeeCurrency()));
-        }
     }
 
     private Gain createGain(Hold hold, Transaction transaction){
@@ -343,19 +268,20 @@ public class ReportService {
                 fiatValue,
                 report);
     }
-/// TODO PROCEED HERE
+
     private void addDonation(List<Donation> donations, Transaction transaction) {
         Report report = getReport(transaction);
-        List<Hold> currencyHold = holdingService.getHoldings(transaction.getOutCurrency());
+        var currencyHold = holdingService.getHoldings(transaction.getOutCurrency());
 
         log.debug("donate At {}, with {} {} Value",transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME),transaction.getFeeCurrency().getTicker(), transaction.getOutValue());
         //Print
-        log.debug("Holding before donation: {}", getListOfHoldings(currencyHold, transaction.getOutCurrency()));
-        for (Iterator<Hold> cIter = currencyHold.iterator(); cIter.hasNext();) {
-            Hold hold = cIter.next();
-            Double dif = hold.getAmmount() - transaction.getOutValue();
+        log.debug("Holding before donation: {}", holdingService.getListOfHoldings(transaction.getOutCurrency()));
+        for (Iterator<Deposit> cIter = currencyHold.iterator(); cIter.hasNext();) {
+            Deposit deposit = cIter.next();
+            Double dif = deposit.getAmmount() - transaction.getOutValue();
             log.debug("DIF=  {}", dif);
             if ((-zeroLimit <= dif) && (dif <= zeroLimit)){
+                /// TODO PROCEED HERE
                 donations.add(createDonation(hold, transaction, report));
                 cIter.remove();
                 break;
