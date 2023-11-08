@@ -9,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -44,7 +45,7 @@ public class Withdraw {
     @ManyToOne
     private Report report;
 
-    @OneToMany
+    @ManyToMany
     private List<Deposit> fromDeposits;
 
     public Withdraw(Double ammount, Currency currency, LocalDateTime dateTime, Location location, Report report, List<Deposit> deposits) {

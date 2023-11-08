@@ -13,5 +13,5 @@ import com.mabit.ctb.entity.Currency;
 @Repository
 public interface WithdrawRepository extends CrudRepository<Withdraw, Long>
 {
-    List<Deposit> findByInCurrency(Currency currency);
+    List<Deposit> findByCurrency(Currency currency);
 }
