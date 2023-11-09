@@ -145,7 +145,7 @@ public class HoldService {
             }
             if (dif < -ZERO_LIMIT) {
                 donationRepository.save(createDonation(deposit, transaction, report, true));
-                donationValue = transaction.getOutValue() - deposit.getAvailableAmmount();
+                donationValue = donationValue - deposit.getAvailableAmmount();
                 closeDeposit(deposit);
             }
         }
@@ -181,7 +181,7 @@ public class HoldService {
                     break;
                 }
                 if (dif < -ZERO_LIMIT) {
-                    feeValue = transaction.getFee()- deposit.getAvailableAmmount();
+                    feeValue = feeValue - deposit.getAvailableAmmount();
                     closeDeposit(deposit);
                 }
             }
@@ -244,9 +244,6 @@ public class HoldService {
                 var withdraw = new Withdraw(gainValue,transaction.getOutCurrency(),transaction.getDateTime(), transaction.getExchange(),report, usedDeposits);
                 withdrawRepository.save(withdraw);
                 gainRepository.save(createGain(deposit, transaction, report));
-                log.trace(" == 0");
-                log.trace("Ammount h = " + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker());
-                log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
                 closeDeposit(deposit);
                 log.trace("Element from holding removed");
                 break;
@@ -256,9 +253,6 @@ public class HoldService {
                 var withdraw = new Withdraw(gainValue,transaction.getOutCurrency(),transaction.getDateTime(), transaction.getExchange(),report, usedDeposits);
                 withdrawRepository.save(withdraw);
                 gainRepository.save(createGain(deposit, transaction, report));
-                log.trace(" > 0");
-                log.trace("Ammount h = " + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker());
-                log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
                 updateDeposit(deposit, dif);
                 //bleibt was übrig
                 log.trace("Element remains with new Ammount = " + dif);
@@ -266,12 +260,12 @@ public class HoldService {
                 break;
             }
             if (dif < -ZERO_LIMIT) {
-                log.debug("hold=" + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker() + " Transaction= " + transaction.getOutValue() + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
+                log.debug("hold=" + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker() + " Substraction Value= " + gainValue + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
                 gainRepository.save(createGain(deposit, transaction, report, true)); //currently all trades are handled seperatly, switch if like nowerdays in tradingView // all independent of year
                 log.trace(" < 0");
                 log.trace("Ammount h = " + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker());
                 log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
-                gainValue = transaction.getOutValue() - deposit.getAvailableAmmount();
+                gainValue = gainValue - deposit.getAvailableAmmount();
                 log.trace("rest = " + (transaction.getOutValue() - deposit.getAvailableAmmount()) + transaction.getOutCurrency());
                 log.debug("Element from holding removed, next round to next holding, dif=" + dif);
                 closeDeposit(deposit);
