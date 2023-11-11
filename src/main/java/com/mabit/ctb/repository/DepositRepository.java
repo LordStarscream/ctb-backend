@@ -14,5 +14,6 @@ public interface DepositRepository extends CrudRepository<Deposit, Long>
 {
     List<Deposit> findByCurrency(Currency currency);
     List<Deposit> findByHasAvailableAmmount(boolean hasAvailableAmmount);
-    List<Deposit> findByHasAvailableAmmountAndCurrency(boolean hasAvailableAmmount, Currency currency);
+    //List<Deposit> findByHasAvailableAmmountAndCurrency(boolean hasAvailableAmmount, Currency currency);
+    List<Deposit> findByHasAvailableAmmountAndCurrencyOrderByDateTime(boolean hasAvailableAmmount, Currency currency);
 }

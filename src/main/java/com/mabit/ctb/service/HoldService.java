@@ -61,11 +61,11 @@ public class HoldService {
     }
 
     public List<Deposit> getAvailableHoldings(Currency currency){
-        return depositRepository.findByHasAvailableAmmountAndCurrency(true, currency);
+        return depositRepository.findByHasAvailableAmmountAndCurrencyOrderByDateTime(true, currency);
     }
 
     public String getListOfHoldings(Currency currency){
-        var list = depositRepository.findByHasAvailableAmmountAndCurrency(true, currency);
+        var list = depositRepository.findByHasAvailableAmmountAndCurrencyOrderByDateTime(true, currency);
         Double sum = 0.0;
         StringBuilder sb = new StringBuilder();
         sb.append(currency.getTicker()).append(": ");
@@ -193,12 +193,14 @@ public class HoldService {
     /*
      * Realisierte Gewinne
      */
-    private Gain createGain(Deposit deposit, Transaction transaction, Report report){
-        return createGain(deposit, transaction, report, false);
+    private Gain createGain(Deposit deposit, Transaction transaction, Double gainValue, Report report){
+        return createGain(deposit, transaction, gainValue, report, false);
     }
 
-    private Gain createGain(Deposit deposit, Transaction transaction, Report report, boolean useHoldValue) {
-        var value = useHoldValue ? deposit.getAvailableAmmount() : transaction.getOutValue();
+    private Gain createGain(Deposit deposit, Transaction transaction, Double gainValue, Report report, boolean useHoldValue) {
+        log.debug("#### {} *** at: {}", transaction.getDateTime().format(DateTimeFormatter.ISO_DATE_TIME), transaction.getExchange().getName());
+        log.debug("useHolde = {}", useHoldValue?"true":"false");
+        var value = useHoldValue ? deposit.getAvailableAmmount() : gainValue;
         boolean isShort = ChronoUnit.YEARS.between(deposit.getDateTime(), transaction.getDateTime()) < 1;
         var shortLong = "long";
         if (isShort)
@@ -206,6 +208,8 @@ public class HoldService {
         var proceeds = value * transaction.getOutFiatExchange().getFactor(); //auf zwei stellen runden !!
         var costbasis = value * deposit.getFactor();
         var profit = proceeds - costbasis;
+        log.debug("costbasis: value= {} * deposit.Factor= {} = {}", value,deposit.getFactor(),costbasis);
+        log.debug("prceeds: value = {} * transaction.Factor = {} = {}", value,transaction.getOutFiatExchange().getFactor(), proceeds);
         return new Gain(
                 value,
                 transaction.getOutCurrency(),
@@ -243,7 +247,7 @@ public class HoldService {
                 log.debug("hold= " + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker() + " Substraction Value= " + gainValue + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
                 var withdraw = new Withdraw(gainValue,transaction.getOutCurrency(),transaction.getDateTime(), transaction.getExchange(),report, usedDeposits);
                 withdrawRepository.save(withdraw);
-                gainRepository.save(createGain(deposit, transaction, report));
+                gainRepository.save(createGain(deposit, transaction, gainValue, report));
                 closeDeposit(deposit);
                 log.trace("Element from holding removed");
                 break;
@@ -252,7 +256,7 @@ public class HoldService {
                 log.debug("hold=" + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker() + " Substraction Value= " + gainValue + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
                 var withdraw = new Withdraw(gainValue,transaction.getOutCurrency(),transaction.getDateTime(), transaction.getExchange(),report, usedDeposits);
                 withdrawRepository.save(withdraw);
-                gainRepository.save(createGain(deposit, transaction, report));
+                gainRepository.save(createGain(deposit, transaction, gainValue, report));
                 updateDeposit(deposit, dif);
                 //bleibt was übrig
                 log.trace("Element remains with new Ammount = " + dif);
@@ -261,7 +265,7 @@ public class HoldService {
             }
             if (dif < -ZERO_LIMIT) {
                 log.debug("hold=" + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker() + " Substraction Value= " + gainValue + " Fee= " + transaction.getFee() + " in Currency =" + transaction.getFeeCurrency());
-                gainRepository.save(createGain(deposit, transaction, report, true)); //currently all trades are handled seperatly, switch if like nowerdays in tradingView // all independent of year
+                gainRepository.save(createGain(deposit, transaction, gainValue, report, true)); //currently all trades are handled seperatly, switch if like nowerdays in tradingView // all independent of year
                 log.trace(" < 0");
                 log.trace("Ammount h = " + deposit.getAvailableAmmount() + transaction.getOutCurrency().getTicker());
                 log.trace("Ammount wt = " + transaction.getOutValue() + transaction.getOutCurrency().getTicker() + " , Fee = " + transaction.getFee());
