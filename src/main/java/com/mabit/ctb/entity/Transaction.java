@@ -62,6 +62,8 @@ public class Transaction{
 
     private String comment;
 
+    private boolean reportCalculated = false;
+
     public Transaction(Trade trade, TradeDirection direction) {
         this.updateTransaction(trade, direction);
     }

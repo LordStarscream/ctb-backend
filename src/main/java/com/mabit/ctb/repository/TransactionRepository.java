@@ -15,4 +15,5 @@ public interface TransactionRepository extends CrudRepository<Transaction, Long>
 
     Iterable<Transaction> findByTrade(Trade trade);
     List<Transaction> findByOrderByDateTimeAsc();
+    List<Transaction> findByReportCalculatedFalseOrderByDateTimeAsc();
 }

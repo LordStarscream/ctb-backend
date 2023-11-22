@@ -58,9 +58,13 @@ public class ReportService {
         return existingTradeYears;
     }
 
+    public List<Report> availableReports() {
+        return reportRepository.findByAccount(accountService.getAccount());
+    }
+
     public void createReportEntries() throws ReportException {
         Currency fiatCurrency = accountService.getBaseFiatCurrency();
-        List<Transaction> transactions = transactionRepository.findByOrderByDateTimeAsc();
+        List<Transaction> transactions = transactionRepository.findByReportCalculatedFalseOrderByDateTimeAsc();
         //List<Gain> gains = new ArrayList<>(); // was report
         //List<Donation> donations = new ArrayList<>();
         List<Income> incomes = new ArrayList<>();
@@ -129,7 +133,9 @@ public class ReportService {
                     }
                 }
             }
+            transaction.setReportCalculated(true);
         }
+        transactionRepository.saveAll(transactions);
         //var reportContainer = new ReportContainer(gains, incomes, donations ,hold);
     }
 

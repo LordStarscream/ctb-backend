@@ -12,17 +12,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mabit.ctb.entity.report.Report;
 import com.mabit.ctb.exception.ReportException;
 import com.mabit.ctb.service.ReportService;
 
 @RestController
 public class ReportController {
-   @Autowired
+
+    @Autowired
     private ReportService reportService;
 
     @GetMapping("/report/availableYears")
     public Iterable<Integer> getAvailableReportYears(){
         return reportService.availableReportYear();
+    }
+
+    @GetMapping("/report/reports")
+    public Iterable<Report> getAvailableReports(){
+        return reportService.availableReports();
     }
 
     @PostMapping("/report/createReport")
