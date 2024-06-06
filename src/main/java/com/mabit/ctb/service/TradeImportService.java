@@ -19,6 +19,7 @@ import com.mabit.ctb.entity.Location;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.entity.Transaction;
 import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.repository.FiatExchangeRateRepository;
 import com.mabit.ctb.repository.LocationRepository;
 import com.mabit.ctb.repository.TransactionImportRepository;
 import com.mabit.ctb.repository.TransactionRepository;
@@ -49,11 +50,15 @@ public class TradeImportService {
     @Autowired
     private CurrencyExchangeService currencyExchangeService;
 
+    @Autowired
+    private FiatExchangeRateRepository fiatRepository;
+
     // Set current base Fiat Currency out of config
     @Value("${spring.application.config.currency}")
     private String fiatCurrencyTicker;
 
     private Currency fiatCurrency;
+
 
     public Iterable<TransactionImport> getAllTransactionImports(){
         return transactionImportRepository.findAll();
@@ -129,8 +134,20 @@ public class TradeImportService {
                         (!transaction.getInCurrency().equals(getFiatCurrency()))) { //TODO auslagern in methode, nur für welche die fiat benötigen und bei transaction bei einer mit fiat die rate direkt nehmen
                     TransactionInfo sellInfo
                             = new TransactionInfo(TradeDirection.Sell, transaction.getInCurrency(), transaction.getInValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                    FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
-                    transaction.setInFiatExchange(sellExchangeRate);
+                    if(transactionImport.getOutCurrency() != null && transactionImport.getOutCurrency().equals(getFiatCurrency().getTicker()) && (transactionImport.getInRate() != null)){
+                        Double factor = transactionImport.getInRate();
+                        var fiatExchangeRate = new FiatExchangeRate(
+                                sellInfo.getCurrency(),
+                                sellInfo.getFiatCurrency(),
+                                sellInfo.getLocation(),
+                                factor,
+                                sellInfo.getDateTime());
+                        var sellExchangeRate =  fiatRepository.save(fiatExchangeRate);
+                        transaction.setInFiatExchange(sellExchangeRate);
+                    }else{
+                        FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
+                        transaction.setInFiatExchange(sellExchangeRate);
+                    }
                 }
             }
             /* all Types that not having only in values, so all out and also transactions with both*/
@@ -199,8 +216,11 @@ public class TradeImportService {
         }
 
         if (transactionInfo.isImportSuccess()) {
+            log.info("import success");
             transactionRepository.save(transaction);
+            log.info("saved in transactions");
             transactionImportRepository.delete(transactionImport);
+            log.info("removed import with id {} from imports",transactionImport.getId());
         }
 
         return transactionInfo;

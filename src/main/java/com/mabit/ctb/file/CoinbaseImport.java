@@ -58,14 +58,16 @@ public class CoinbaseImport extends FileImport{
                 transaction.setType(type);
                 transaction.setInValue(Parse.stringToDouble(entry[3]));
                 transaction.setInCurrency(entry[2]);
-                transaction.setOutValue(- Parse.stringToDouble(entry[6]));
+                transaction.setOutValue(Parse.stringToDouble(entry[6]));
                 transaction.setOutCurrency(entry[4]);
+                transaction.setInRate(Parse.stringToDouble(entry[5]));
             }else{
                 transaction.setType(type);
                 transaction.setInValue(Parse.stringToDouble(entry[6]));
                 transaction.setInCurrency(entry[4]);
                 transaction.setOutValue(Parse.stringToDouble(entry[3]));
                 transaction.setOutCurrency(entry[2]);
+                transaction.setOutRate(Parse.stringToDouble(entry[5]));
             }
         }
         if (type == TransactionType.Gift || type == TransactionType.Deposit || type == TransactionType.Income){
@@ -74,6 +76,7 @@ public class CoinbaseImport extends FileImport{
             transaction.setInCurrency(entry[2]);
             transaction.setOutValue(Parse.stringToDouble(entry[6]));
             transaction.setOutCurrency(entry[4]);
+            transaction.setInRate(Parse.stringToDouble(entry[5]));
         }
 
         if(type == TransactionType.Withdraw){
@@ -82,6 +85,7 @@ public class CoinbaseImport extends FileImport{
                 transaction.setInCurrency(entry[4]);
                 transaction.setOutValue(Parse.stringToDouble(entry[3]));
                 transaction.setOutCurrency(entry[2]);
+                transaction.setOutRate(Parse.stringToDouble(entry[5]));
         }
         transaction.setFee(Parse.stringToDouble(entry[8]));
         transaction.setFeeCurrency(entry[4]);
