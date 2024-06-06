@@ -2,6 +2,7 @@ package com.mabit.ctb.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -21,19 +22,20 @@ public class Location {
     @NotNull
     private String name;
 
-    private Boolean isExchange;
-
     private String information;
 
-    public Location(String name, Boolean isExchange, String information) {
+    @ManyToOne
+    private Account account;
+
+    public Location(String name, Account account, String information) {
         this.name = name;
-        this.isExchange = isExchange;
+        this.account = account;
         this.information = information;
     }
 
-    public Location(String name, Boolean isExchange) {
+    public Location(String name, Account account) {
         this.name = name;
-        this.isExchange = isExchange;
+        this.account = account;
     }
 
     @Override

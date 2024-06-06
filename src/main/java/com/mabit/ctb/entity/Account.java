@@ -24,8 +24,15 @@ public class Account {
     @ManyToOne
     private Currency referenceCurrency;
 
+    private String information;
+
     public Account(Currency referenceCurrency) {
         this.referenceCurrency = referenceCurrency;
+    }
+
+    public Account(Currency referenceCurrency, String information) {
+        this.referenceCurrency = referenceCurrency;
+        this.information = information;
     }
 
 }

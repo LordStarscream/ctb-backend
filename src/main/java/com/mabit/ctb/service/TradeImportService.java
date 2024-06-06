@@ -18,6 +18,7 @@ import com.mabit.ctb.entity.FiatExchangeRate;
 import com.mabit.ctb.entity.Location;
 import com.mabit.ctb.entity.TransactionImport;
 import com.mabit.ctb.entity.Transaction;
+import com.mabit.ctb.repository.AccountRepository;
 import com.mabit.ctb.repository.CurrencyRepository;
 import com.mabit.ctb.repository.LocationRepository;
 import com.mabit.ctb.repository.TransactionImportRepository;
@@ -48,6 +49,9 @@ public class TradeImportService {
 
     @Autowired
     private CurrencyExchangeService currencyExchangeService;
+
+    @Autowired
+    private AccountService accountService;
 
     // Set current base Fiat Currency out of config
     @Value("${spring.application.config.currency}")
@@ -106,7 +110,7 @@ public class TradeImportService {
             if (!transactionImport.getExchange().isEmpty()) {
                 Location location = locationRepository.findByName(transactionImport.getExchange());
                 if (location == null) {
-                    location = locationRepository.save(new Location(transactionImport.getExchange(), true));
+                    location = locationRepository.save(new Location(transactionImport.getExchange(), accountService.getAccount()));
                 }
                 transaction.setExchange(location);
             }

@@ -1,7 +1,5 @@
 package com.mabit.ctb.controller;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mabit.ctb.entity.report.Report;
@@ -22,7 +19,6 @@ import com.mabit.ctb.exception.ReportException;
 import com.mabit.ctb.service.ExportReportService;
 import com.mabit.ctb.service.ReportService;
 
-import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 public class ReportController {
