@@ -46,6 +46,17 @@ public final class Parse {
         return  (string != null && !string.isEmpty()) ? Double.parseDouble(string) : null;
     }
 
+    public static Double stringToDoublePositive(String string) {
+        var result = stringToDouble(string);
+        if (result == null)
+            return null;
+        else{
+            if (result < 0)
+                return -result;
+        }
+        return  result;
+    }
+
     public static String doubleToString(Double value) {
         return (value != null) ? value.toString() : null;
     }
