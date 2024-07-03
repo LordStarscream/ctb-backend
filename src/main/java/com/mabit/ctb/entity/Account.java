@@ -1,5 +1,7 @@
 package com.mabit.ctb.entity;
 
+import com.mabit.ctb.types.AccountType;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,18 +23,25 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    private String name;
     @ManyToOne
     private Currency referenceCurrency;
 
     private String information;
 
+    private AccountType type;
+
     public Account(Currency referenceCurrency) {
         this.referenceCurrency = referenceCurrency;
+        this.name = "Crypto Base";
+        this.type = AccountType.crypto;
     }
 
-    public Account(Currency referenceCurrency, String information) {
+    public Account(Currency referenceCurrency, String information,  String name, AccountType type) {
         this.referenceCurrency = referenceCurrency;
         this.information = information;
+        this.name = name;
+        this.type = type;
     }
 
 }

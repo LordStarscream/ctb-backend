@@ -1,12 +1,12 @@
-package com.mabit.ctb.entity.cfd;
+package com.mabit.ctb.types;
 
-public enum TradeType {
-    buy("buy"),
-    sell("sell");
+public enum AccountType {
+    crypto("crypto"),
+    forex("forex");
 
     private String label;
 
-    TradeType(String label){
+    AccountType(String label){
         this.label = label;
     }
 
@@ -14,4 +14,5 @@ public enum TradeType {
     public String toString(){
         return label;
     }
+
 }

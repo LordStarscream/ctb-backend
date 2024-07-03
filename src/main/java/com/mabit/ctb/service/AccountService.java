@@ -1,13 +1,20 @@
 package com.mabit.ctb.service;
 
+import java.util.stream.StreamSupport;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mabit.ctb.entity.Account;
 import com.mabit.ctb.entity.Currency;
+import com.mabit.ctb.entity.cfd.Deal;
+import com.mabit.ctb.entity.cfd.DealDto;
+import com.mabit.ctb.entity.cfd.EntryType;
+import com.mabit.ctb.entity.cfd.TradeType;
 import com.mabit.ctb.repository.AccountRepository;
 import com.mabit.ctb.repository.CurrencyRepository;
+import com.mabit.ctb.types.AccountType;
 
 @Service
 public class AccountService {
@@ -42,11 +49,32 @@ public class AccountService {
 
     public Account getAccount(){
         var result = accountRepository.findAll();
-        Account account = new Account(fiatCurrency);
         if(result.iterator().hasNext() == true){
-            return result.iterator().next();
+            var cryptoAccount = StreamSupport.stream(result.spliterator(), false)
+                                    .filter(a -> a.getType().equals(AccountType.crypto)).findFirst();
+            if(cryptoAccount.isPresent())
+                return cryptoAccount.get();
         }
+        getBaseFiatCurrency();
+        Account account = new Account(fiatCurrency);
         return accountRepository.save(account);
+    }
+
+    public Iterable<Account> getAllAccounts(){
+        var accounts = accountRepository.findAll();
+        return accounts;
+    }
+
+    public void addAccount(Account account){
+        var dbAccount = accountRepository.findById(account.getId());
+        if (dbAccount.isPresent()){
+            var a = dbAccount.get();
+            a.setInformation(account.getInformation());
+            a.setReferenceCurrency(account.getReferenceCurrency());
+            accountRepository.save(a);
+        }else{
+            accountRepository.save(account);
+        }
     }
 
 }

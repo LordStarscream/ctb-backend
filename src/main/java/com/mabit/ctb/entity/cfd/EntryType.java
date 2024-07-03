@@ -1,8 +1,8 @@
 package com.mabit.ctb.entity.cfd;
 
 public enum EntryType {
-    In("in"),
-    Out("out");
+    in("in"),
+    out("out");
 
     private String label;
 

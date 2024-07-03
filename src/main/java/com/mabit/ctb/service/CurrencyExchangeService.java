@@ -50,7 +50,6 @@ public class CurrencyExchangeService {
                 exValue = fiatRepository.save(fiatExchangeRate);
             }
         } else {
-            //exValue = importController.checkFiatRate(info, currentRate);
             throw new NotImplementedException("autoSetRate is mendetory curently");
         }
         return exValue;
