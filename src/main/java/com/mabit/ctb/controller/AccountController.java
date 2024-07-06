@@ -49,6 +49,11 @@ public class AccountController {
         accountService.addAccount(account);
     }
 
+    @GetMapping("/accountTypes")
+    public Iterable<AccountType> getAccountTypes() {
+        return accountService.getAccountTypes();
+    }
+
     private AccountDto toDto(Account account){
         AccountDto accountDto = new AccountDto();
         accountDto.setId(account.getId());

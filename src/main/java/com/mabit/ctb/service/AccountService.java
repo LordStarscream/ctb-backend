@@ -1,5 +1,7 @@
 package com.mabit.ctb.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +77,10 @@ public class AccountService {
         }else{
             accountRepository.save(account);
         }
+    }
+
+    public Iterable<AccountType> getAccountTypes(){
+        return List.of(AccountType.values());
     }
 
 }

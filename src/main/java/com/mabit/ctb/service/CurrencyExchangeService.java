@@ -1,8 +1,5 @@
 package com.mabit.ctb.service;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,11 +25,8 @@ public class CurrencyExchangeService {
     @Autowired
     private CurrencyRepository currencyRepository;
 
-    public static final Map<String, String> baseCurrencies = new HashMap<>();
-    static {
-        baseCurrencies.put("EUR", "Euro");
-        baseCurrencies.put("USD", "United State dollar");
-        baseCurrencies.put("GBP", "Britisches Pfund");
+    public Iterable<Currency> getAllCurrencys(){
+        return currencyRepository.findAll();
     }
 
     @Transactional
@@ -77,8 +71,8 @@ public class CurrencyExchangeService {
     @Transactional
     public Currency getCurrency(String ticker){
         String name = null;
-        if (baseCurrencies.containsKey(ticker))
-            name = baseCurrencies.get(ticker);
+        if (CurrencyService.baseCurrencies.containsKey(ticker))
+            name = CurrencyService.baseCurrencies.get(ticker);
         else
             name = dataExchange.getCurrencyName(ticker);
         Currency currency = new Currency(ticker, name);
