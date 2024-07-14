@@ -39,6 +39,7 @@ public class LedgerLiveImport extends FileImport{
         typeMapping = new Hashtable<String, TransactionType>();
         typeMapping.put("IN", TransactionType.Deposit);
         typeMapping.put("OUT", TransactionType.Withdraw);
+        typeMapping.put("FEES", TransactionType.Withdraw);
 
     }
 
@@ -46,12 +47,15 @@ public class LedgerLiveImport extends FileImport{
     protected TransactionImport entryToEntity(String[] entry) {
         TransactionImport transaction = new TransactionImport();
         var type = typeMapping.get(entry[2]);
+        boolean isFee = (entry[2].equals("FEES"));
         /*
             if (type == TransactionType.Deposit){
                 as buy is done in 3rd party no need here
                 transaction.setInValue(Parse.StringToDouble(entry[3]));
                 transaction.setInCurrency(entry[1]);
             }*/
+        if (type == TransactionType.Deposit)
+            return null;
         if (type == TransactionType.Withdraw)
         {
             transaction.setType(TransactionType.Trade);
@@ -60,8 +64,10 @@ public class LedgerLiveImport extends FileImport{
             transaction.setInValue(Parse.stringToDouble(entry[9]));
             transaction.setInCurrency(entry[8]);
             //Die Gebüren sollten nur beim senden anfallen, wenn bei Deposit würden sie wohl doppelt berechnet werden
-            transaction.setFee(Parse.stringToDouble(entry[4]));
-            transaction.setFeeCurrency(entry[1]);
+            if(isFee){
+                transaction.setFee(Parse.stringToDouble(entry[4]));
+                transaction.setFeeCurrency(entry[1]);
+            }
             transaction.setExchange(getName());
             transaction.setComment(entry[6]);
 

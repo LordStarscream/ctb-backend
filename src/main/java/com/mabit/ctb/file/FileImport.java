@@ -30,7 +30,9 @@ public abstract class FileImport {
     private List<TransactionImport> convertToEntities(List<String[]> entries) {
         List<TransactionImport> transactions = new ArrayList<>();
         for (String[] entry : entries) {
-            transactions.add(entryToEntity(entry));
+            var transactionImport = entryToEntity(entry);
+            if (transactionImport != null)
+                transactions.add(transactionImport);
         }
         return transactions;
     }
