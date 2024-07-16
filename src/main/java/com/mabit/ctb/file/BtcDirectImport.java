@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@Qualifier("Coinbase")
-public class CoinbaseImport extends FileImport{
+@Qualifier("BtcDirect")
+public class BtcDirectImport extends FileImport{
 
     public List<TransactionImport> getImportEntities() {
         return importEntities;
@@ -31,13 +31,6 @@ public class CoinbaseImport extends FileImport{
         HashMap<String, TransactionType> typeMapping = new HashMap<>();
         typeMapping.put("Buy", TransactionType.Trade);
         typeMapping.put("Sell", TransactionType.Trade);
-        typeMapping.put("Rewards Income", TransactionType.Income);
-        typeMapping.put("Learning Reward", TransactionType.Gift);
-        typeMapping.put("Coinbase Earn", TransactionType.Gift);
-        typeMapping.put("Receive", TransactionType.Income);
-        typeMapping.put("Send", TransactionType.Withdraw);
-        typeMapping.put("Withdrawal", TransactionType.Withdraw);
-        typeMapping.put("Deposit", TransactionType.Deposit);
         return typeMapping;
 
     }
@@ -54,40 +47,23 @@ public class CoinbaseImport extends FileImport{
         var typeMapping = typeMap();
         var tradeDirection = tradeDirectionMap();
         TransactionImport transaction = new TransactionImport();
-        var type = typeMapping.get(entry[2]);
+        var type = typeMapping.get(entry[0]);
         if (type == TransactionType.Trade){
-            var direction = tradeDirection.get(entry[2]);
+            var direction = tradeDirection.get(entry[0]);
             if (direction == TransactionType.Deposit){
                 transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setInCurrency(entry[3]);
-                transaction.setOutValue(- Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setOutCurrency(entry[5]);
+                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[6])));
+                transaction.setInCurrency(entry[7]);
+                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[3])));
+                transaction.setOutCurrency(entry[4]);
             }else{
                 transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setInCurrency(entry[5]);
-                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setOutCurrency(entry[3]);
+                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[3])));
+                transaction.setInCurrency(entry[4]);
+                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[6])));
+                transaction.setOutCurrency(entry[7]);
             }
         }
-        if (type == TransactionType.Gift || type == TransactionType.Deposit || type == TransactionType.Income){
-            transaction.setType(type);
-            transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-            transaction.setInCurrency(entry[3]);
-            transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-            transaction.setOutCurrency(entry[5]);
-        }
-
-        if(type == TransactionType.Withdraw){
-            transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setInCurrency(entry[5]);
-                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setOutCurrency(entry[3]);
-        }
-        transaction.setFee(Parse.stringToDouble(StringUtils.removeEuro(entry[9])));
-        transaction.setFeeCurrency(entry[5]);
         transaction.setExchange(getName());
         if(entry.length >= 11)
             transaction.setComment(entry[10]);
@@ -112,6 +88,6 @@ public class CoinbaseImport extends FileImport{
 
     @Override
     public String getName(){
-        return "Coinbase";
+        return "BtcDirect";
     }
 }

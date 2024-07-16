@@ -60,8 +60,9 @@ public class CurrencyExchangeService {
                     factor,
                     info.getDateTime());
             return fiatRepository.save(fiatExchangeRate);
-        } else
+        } else {
             throw new NotImplementedException("autoSetRate is mendetory curently");
+        }
     }
 
     public FiatExchangeRate save(FiatExchangeRate fiatExchangeRate){

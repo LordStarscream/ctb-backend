@@ -26,6 +26,7 @@ import com.mabit.ctb.repository.TransactionImportRepository;
 import com.mabit.ctb.repository.TransactionRepository;
 import com.mabit.ctb.types.TradeDirection;
 import com.mabit.ctb.types.TransactionType;
+import com.mabit.ctb.utils.*;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,8 +87,7 @@ public class TradeImportService {
 
     @Transactional
     private TransactionImportInfo checkImport(TransactionImport transactionImport, Boolean autoFiat) {
-        TransactionImportInfo transactionInfo = new TransactionImportInfo();
-        transactionInfo.setImportSuccess(true);
+        TransactionImportInfo transactionInfo = new TransactionImportInfo(transactionImport);
         Transaction transaction = new Transaction();
         /*Deposit and Withdraw need no fiat calculation*/
         List<TransactionType> inOnly = Arrays.asList(TransactionType.Income, TransactionType.Deposit, TransactionType.Gift);
@@ -108,7 +108,7 @@ public class TradeImportService {
                 transactionInfo.setImportSuccess(false);
             }
 
-            if (!transactionImport.getExchange().isEmpty()) {
+            if (!StringUtils.isNullOrEmpty(transactionImport.getExchange())) {
                 Location location = locationRepository.findByName(transactionImport.getExchange());
                 if (location == null) {
                     location = locationRepository.save(new Location(transactionImport.getExchange(), accountService.getAccount()));
@@ -117,7 +117,7 @@ public class TradeImportService {
             }
 
             //Fee is not set and is Null .. why by spot import phemex ?
-            if (!transactionImport.getFeeCurrency().isEmpty() && transactionImport.getFee() != null) {
+            if (!StringUtils.isNullOrEmpty(transactionImport.getFeeCurrency()) && transactionImport.getFee() != null) {
                 Currency feeCurrency = getCurrency(transactionImport.getFeeCurrency());
                 transaction.setFeeCurrency(feeCurrency);
                 transaction.setFee(transactionImport.getFee());
@@ -134,8 +134,14 @@ public class TradeImportService {
                         (!transaction.getInCurrency().equals(getFiatCurrency()))) { //TODO auslagern in methode, nur für welche die fiat benötigen und bei transaction bei einer mit fiat die rate direkt nehmen
                     TransactionInfo sellInfo
                             = new TransactionInfo(TradeDirection.Sell, transaction.getInCurrency(), transaction.getInValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
+                    if (Boolean.TRUE.equals(autoFiat)){
                         FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
                         transaction.setInFiatExchange(sellExchangeRate);
+                    }
+                    else{
+                        transactionInfo.setFiatRateMissing(true);
+                        transactionInfo.setImportSuccess(false);
+                    }
                 }
             }
             /* all Types that not having only in values, so all out and also transactions with both*/
@@ -149,8 +155,13 @@ public class TradeImportService {
                         (!transaction.getOutCurrency().equals(getFiatCurrency()))) {
                     TransactionInfo buyInfo
                             = new TransactionInfo(TradeDirection.Buy, transaction.getOutCurrency(), transaction.getOutValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                    FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
-                    transaction.setOutFiatExchange(buyExchangeRate);
+                    if (Boolean.TRUE.equals(autoFiat)){
+                        FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
+                        transaction.setOutFiatExchange(buyExchangeRate);
+                    }else{
+                        transactionInfo.setFiatRateMissing(true);
+                        transactionInfo.setImportSuccess(false);
+                    }
                 }
             }
             /* Transaction now in own part .. TODO should completley be overthought */
@@ -160,7 +171,7 @@ public class TradeImportService {
                     transaction.setInCurrency(inCurrency);
                     transaction.setInValue(transactionImport.getInValue());
                 }
-                if (!transactionImport.getOutCurrency().isEmpty()) { //should always be set in a trade
+                if (!StringUtils.isNullOrEmpty(transactionImport.getOutCurrency())) { //should always be set in a trade
                     Currency outCurrency = getCurrency(transactionImport.getOutCurrency());
                     transaction.setOutCurrency(outCurrency);
                     transaction.setOutValue(transactionImport.getOutValue());
@@ -188,13 +199,23 @@ public class TradeImportService {
                     }else{
                         TransactionInfo buyInfo
                                 = new TransactionInfo(TradeDirection.Buy, transaction.getOutCurrency(), transaction.getOutValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                        FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
-                        transaction.setOutFiatExchange(buyExchangeRate);
+                        if(Boolean.TRUE.equals(autoFiat)){
+                            FiatExchangeRate buyExchangeRate = currencyExchangeService.checkFiatRate(buyInfo, autoFiat);
+                            transaction.setOutFiatExchange(buyExchangeRate);
+                        }else{
+                            transactionInfo.setFiatRateMissing(true);
+                            transactionInfo.setImportSuccess(false);
+                        }
 
                         TransactionInfo sellInfo
                                 = new TransactionInfo(TradeDirection.Sell, transaction.getInCurrency(), transaction.getInValue(), transaction.getFee(), transaction.getExchange(), transaction.getDateTime());
-                        FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
-                        transaction.setInFiatExchange(sellExchangeRate);
+                        if(Boolean.TRUE.equals(autoFiat)){
+                            FiatExchangeRate sellExchangeRate = currencyExchangeService.checkFiatRate(sellInfo, autoFiat);
+                            transaction.setInFiatExchange(sellExchangeRate);
+                        }else{
+                            transactionInfo.setFiatRateMissing(true);
+                            transactionInfo.setImportSuccess(false);
+                        }
                     }
                 }
             }
