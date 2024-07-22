@@ -36,8 +36,8 @@ public class CoinbaseImport extends FileImport{
         typeMapping.put("Coinbase Earn", TransactionType.Gift);
         typeMapping.put("Receive", TransactionType.Income);
         typeMapping.put("Send", TransactionType.Withdraw);
-        typeMapping.put("Withdrawal", TransactionType.Withdraw);
-        typeMapping.put("Deposit", TransactionType.Deposit);
+        //typeMapping.put("Withdrawal", TransactionType.Withdraw); is EURO Withdraw
+        //typeMapping.put("Deposit", TransactionType.Deposit); is EURO Deposit
         return typeMapping;
 
     }
@@ -55,13 +55,15 @@ public class CoinbaseImport extends FileImport{
         var tradeDirection = tradeDirectionMap();
         TransactionImport transaction = new TransactionImport();
         var type = typeMapping.get(entry[2]);
+        if (type == null)
+            return null;
         if (type == TransactionType.Trade){
             var direction = tradeDirection.get(entry[2]);
             if (direction == TransactionType.Deposit){
                 transaction.setType(type);
                 transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
                 transaction.setInCurrency(entry[3]);
-                transaction.setOutValue(- Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
+                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
                 transaction.setOutCurrency(entry[5]);
             }else{
                 transaction.setType(type);

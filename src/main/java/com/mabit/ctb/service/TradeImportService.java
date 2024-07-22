@@ -139,8 +139,15 @@ public class TradeImportService {
                         transaction.setInFiatExchange(sellExchangeRate);
                     }
                     else{
-                        transactionInfo.setFiatRateMissing(true);
-                        transactionInfo.setImportSuccess(false);
+                        if(getCurrency(transactionImport.getOutCurrency()).equals(getFiatCurrency())){
+                            var factor = transactionImport.getOutValue() / transactionImport.getInValue();
+                            FiatExchangeRate rate = new FiatExchangeRate(transaction.getInCurrency(), getCurrency(transactionImport.getOutCurrency()),transaction.getExchange(),factor,transaction.getDateTime());
+                            rate = currencyExchangeService.save(rate);
+                            transaction.setInFiatExchange(rate);
+                        }else{
+                            transactionInfo.setFiatRateMissing(true);
+                            transactionInfo.setImportSuccess(false);
+                        }
                     }
                 }
             }
