@@ -2,6 +2,7 @@ package com.mabit.ctb.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -20,7 +21,7 @@ import com.mabit.ctb.service.AccountService;
 import com.mabit.ctb.service.CurrencyExchangeService;
 import com.mabit.ctb.service.cfd.TransactionService;
 import com.mabit.ctb.service.cfd.TransactionServiceException;
-import com.mabit.ctb.types.AccountType;
+import com.mabit.ctb.entity.AccountType;
 
 @RestController
 public class AccountController {
@@ -45,13 +46,14 @@ public class AccountController {
         account.setInformation(accountDto.getInformation());
         Currency currency = currencyService.getCurrency(accountDto.getReferenceCurrency());
         account.setReferenceCurrency(currency);
-        account.setType(AccountType.valueOf(accountDto.getType()));
+        account.setType(accountService.getAccountType(accountDto.getType()));
         accountService.addAccount(account);
     }
 
     @GetMapping("/accountTypes")
-    public Iterable<AccountType> getAccountTypes() {
-        return accountService.getAccountTypes();
+    public List<String> getAccountTypes() {
+        return  StreamSupport.stream(accountService.getAccountTypes().spliterator(), false)
+        .map(AccountType::getName).collect(Collectors.toList());
     }
 
     private AccountDto toDto(Account account){
@@ -60,7 +62,7 @@ public class AccountController {
         accountDto.setName(account.getName());
         accountDto.setInformation(account.getInformation());
         accountDto.setReferenceCurrency(account.getReferenceCurrency().getTicker());
-        accountDto.setType(account.getType().name());
+        accountDto.setType(account.getType().getName());
         return accountDto;
     }
 }

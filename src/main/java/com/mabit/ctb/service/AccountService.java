@@ -10,13 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.mabit.ctb.entity.Account;
 import com.mabit.ctb.entity.Currency;
-import com.mabit.ctb.entity.cfd.Deal;
-import com.mabit.ctb.entity.cfd.DealDto;
-import com.mabit.ctb.entity.cfd.EntryType;
-import com.mabit.ctb.entity.cfd.TradeType;
 import com.mabit.ctb.repository.AccountRepository;
+import com.mabit.ctb.repository.AccountTypeRepository;
 import com.mabit.ctb.repository.CurrencyRepository;
-import com.mabit.ctb.types.AccountType;
+import com.mabit.ctb.entity.AccountType;
 
 @Service
 public class AccountService {
@@ -28,6 +25,9 @@ public class AccountService {
 
     @Autowired
     private CurrencyExchangeService currencyExchangeService;
+
+    @Autowired
+    private AccountTypeRepository accountTypeRepository;
 
     @Value("${spring.application.config.currency}")
     private String fiatCurrencyTicker;
@@ -49,16 +49,21 @@ public class AccountService {
         return fiatCurrency;
     }
 
-    public Account getAccount(){
-        var result = accountRepository.findAll();
-        if(result.iterator().hasNext() == true){
-            var cryptoAccount = StreamSupport.stream(result.spliterator(), false)
-                                    .filter(a -> a.getType().equals(AccountType.crypto)).findFirst();
-            if(cryptoAccount.isPresent())
-                return cryptoAccount.get();
+    public Account getCryptoAccount(){
+        var result = accountRepository.findByIsCryptoAccount(true);
+        if(result.iterator().hasNext()){
+            var cryptoAccount = result.iterator().next();
+            return cryptoAccount;
         }
         getBaseFiatCurrency();
-        Account account = new Account(fiatCurrency);
+        var type = accountTypeRepository.findByName("Crypto");
+        if (type.isPresent()){
+            Account account = new Account(fiatCurrency, type.get());
+            return accountRepository.save(account);
+        }
+        var newType = accountTypeRepository.save(new AccountType("Crypto"));
+
+        Account account = new Account(fiatCurrency, newType);
         return accountRepository.save(account);
     }
 
@@ -78,9 +83,17 @@ public class AccountService {
             accountRepository.save(account);
         }
     }
-
+/*
     public Iterable<AccountType> getAccountTypes(){
         return List.of(AccountType.values());
+    }
+*/
+    public Iterable<AccountType> getAccountTypes(){
+        return accountTypeRepository.findAll();
+    }
+
+    public AccountType getAccountType(String name){
+        return accountTypeRepository.findByName(name).get();
     }
 
 }

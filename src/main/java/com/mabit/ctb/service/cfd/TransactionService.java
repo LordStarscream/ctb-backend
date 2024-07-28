@@ -15,6 +15,7 @@ import com.mabit.ctb.entity.cfd.EntryType;
 import com.mabit.ctb.entity.cfd.TradeType;
 import com.mabit.ctb.repository.AccountRepository;
 import com.mabit.ctb.repository.DealRepository;
+import com.mabit.ctb.utils.StringUtils;
 
 @Service
 public class TransactionService {
@@ -93,6 +94,9 @@ public class TransactionService {
     private LocalDateTime translateToDate(String dateString){
         DateTimeFormatter formatter = null;
         LocalDateTime dateTime = null;
+
+        if (StringUtils.isNullOrEmpty(dateString))
+            return null;
 
         try {
             formatter = DateTimeFormatter.ISO_DATE_TIME;

@@ -1,6 +1,5 @@
 package com.mabit.ctb.entity;
 
-import com.mabit.ctb.types.AccountType;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,12 +28,16 @@ public class Account {
 
     private String information;
 
+    private Boolean isCryptoAccount;
+
+    @ManyToOne
     private AccountType type;
 
-    public Account(Currency referenceCurrency) {
+    public Account(Currency referenceCurrency, AccountType type) {
         this.referenceCurrency = referenceCurrency;
         this.name = "Crypto Base";
-        this.type = AccountType.crypto;
+        this.type = type;
+        this.isCryptoAccount = true;
     }
 
     public Account(Currency referenceCurrency, String information,  String name, AccountType type) {
@@ -42,6 +45,7 @@ public class Account {
         this.information = information;
         this.name = name;
         this.type = type;
+        this.isCryptoAccount = false;
     }
 
 }

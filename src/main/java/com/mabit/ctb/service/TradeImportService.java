@@ -111,7 +111,7 @@ public class TradeImportService {
             if (!StringUtils.isNullOrEmpty(transactionImport.getExchange())) {
                 Location location = locationRepository.findByName(transactionImport.getExchange());
                 if (location == null) {
-                    location = locationRepository.save(new Location(transactionImport.getExchange(), accountService.getAccount()));
+                    location = locationRepository.save(new Location(transactionImport.getExchange(), accountService.getCryptoAccount()));
                 }
                 transaction.setExchange(location);
             }

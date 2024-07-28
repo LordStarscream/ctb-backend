@@ -59,7 +59,7 @@ public class ReportService {
     }
 
     public List<Report> availableReports() {
-        return reportRepository.findByAccount(accountService.getAccount());
+        return reportRepository.findByAccount(accountService.getCryptoAccount());
     }
 
     public void createReportEntries() throws ReportException {
@@ -68,7 +68,7 @@ public class ReportService {
         //List<Gain> gains = new ArrayList<>(); // was report
         //List<Donation> donations = new ArrayList<>();
         List<Income> incomes = new ArrayList<>();
-        this.account = accountService.getAccount();
+        this.account = accountService.getCryptoAccount();
 
         for (Transaction transaction : transactions) {
             boolean hasOut = (transaction.getOutCurrency() != null);
