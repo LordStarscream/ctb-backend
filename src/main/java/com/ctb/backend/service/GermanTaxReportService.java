@@ -93,19 +93,21 @@ public class GermanTaxReportService {
             // Sort by trade date
             symbolTrades.sort(Comparator.comparing(Trade::getTradeDate));
             
-            // FIFO queue for buy trades
-            Queue<Trade> buyQueue = new LinkedList<>();
+            // FIFO queue for buy trades with remaining amounts
+            Queue<BuyTradeRemaining> buyQueue = new LinkedList<>();
             
             for (Trade trade : symbolTrades) {
                 if (trade.getTradeType() == Trade.TradeType.BUY) {
-                    buyQueue.offer(trade);
+                    // Create a copy to track remaining amount without modifying original
+                    buyQueue.offer(new BuyTradeRemaining(trade, trade.getAmount()));
                 } else if (trade.getTradeType() == Trade.TradeType.SELL) {
                     // Process sell against oldest buys (FIFO)
                     BigDecimal remainingSellAmount = trade.getAmount();
                     
                     while (remainingSellAmount.compareTo(BigDecimal.ZERO) > 0 && !buyQueue.isEmpty()) {
-                        Trade buyTrade = buyQueue.peek();
-                        BigDecimal buyAmount = buyTrade.getAmount();
+                        BuyTradeRemaining buyTradeRemaining = buyQueue.peek();
+                        Trade buyTrade = buyTradeRemaining.trade;
+                        BigDecimal buyAmount = buyTradeRemaining.remainingAmount;
                         
                         BigDecimal matchedAmount = remainingSellAmount.min(buyAmount);
                         
@@ -131,10 +133,10 @@ public class GermanTaxReportService {
                         
                         // Update amounts
                         remainingSellAmount = remainingSellAmount.subtract(matchedAmount);
-                        buyTrade.setAmount(buyAmount.subtract(matchedAmount));
+                        buyTradeRemaining.remainingAmount = buyAmount.subtract(matchedAmount);
                         
                         // Remove from queue if fully consumed
-                        if (buyTrade.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+                        if (buyTradeRemaining.remainingAmount.compareTo(BigDecimal.ZERO) == 0) {
                             buyQueue.poll();
                         }
                     }
@@ -146,17 +148,28 @@ public class GermanTaxReportService {
     }
 
     /**
+     * Helper class to track remaining amount for buy trades during FIFO calculation
+     * without modifying the original Trade entity
+     */
+    private static class BuyTradeRemaining {
+        final Trade trade;
+        BigDecimal remainingAmount;
+        
+        BuyTradeRemaining(Trade trade, BigDecimal remainingAmount) {
+            this.trade = trade;
+            this.remainingAmount = remainingAmount;
+        }
+    }
+
+    /**
      * Calculate portfolio value at a specific date
      */
     public Map<String, BigDecimal> calculatePortfolioValue(LocalDateTime date) {
         log.info("Calculating portfolio value at date: {}", date);
         
-        List<Trade> allTrades = tradeService.getAllTrades();
-        
-        // Filter trades up to the specified date
-        List<Trade> tradesUpToDate = allTrades.stream()
-            .filter(trade -> !trade.getTradeDate().isAfter(date))
-            .collect(Collectors.toList());
+        // Fetch only trades up to the specified date from the database
+        LocalDateTime startDate = LocalDateTime.of(2000, 1, 1, 0, 0);
+        List<Trade> tradesUpToDate = tradeService.getTradesByDateRange(startDate, date);
         
         // Calculate holdings per symbol
         Map<String, BigDecimal> holdings = new HashMap<>();
