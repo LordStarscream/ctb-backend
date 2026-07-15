@@ -34,10 +34,10 @@ public class CoinbaseImport extends FileImport{
         typeMapping.put("Rewards Income", TransactionType.Income);
         typeMapping.put("Learning Reward", TransactionType.Gift);
         typeMapping.put("Coinbase Earn", TransactionType.Gift);
-        typeMapping.put("Receive", TransactionType.Income);
+        typeMapping.put("Receive", TransactionType.Deposit);
         typeMapping.put("Send", TransactionType.Withdraw);
-        //typeMapping.put("Withdrawal", TransactionType.Withdraw); is EURO Withdraw
-        //typeMapping.put("Deposit", TransactionType.Deposit); is EURO Deposit
+        //typeMapping.put("Withdrawal", TransactionType.Withdraw); //is EURO Withdraw to be ignored
+        //typeMapping.put("Deposit", TransactionType.Deposit); //is EURO Deposit to be ignored
         return typeMapping;
 
     }
@@ -54,45 +54,45 @@ public class CoinbaseImport extends FileImport{
         var typeMapping = typeMap();
         var tradeDirection = tradeDirectionMap();
         TransactionImport transaction = new TransactionImport();
-        var type = typeMapping.get(entry[2]);
+        var type = typeMapping.get(entry[1]);
         if (type == null)
             return null;
         if (type == TransactionType.Trade){
-            var direction = tradeDirection.get(entry[2]);
+            var direction = tradeDirection.get(entry[1]);
             if (direction == TransactionType.Deposit){
                 transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setInCurrency(entry[3]);
-                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setOutCurrency(entry[5]);
+                transaction.setInValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[3])));
+                transaction.setInCurrency(entry[2]);
+                transaction.setOutValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[6])));
+                transaction.setOutCurrency(entry[4]);
             }else{
                 transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setInCurrency(entry[5]);
-                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setOutCurrency(entry[3]);
+                transaction.setInValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[6])));
+                transaction.setInCurrency(entry[4]);
+                transaction.setOutValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[3])));
+                transaction.setOutCurrency(entry[2]);
             }
         }
         if (type == TransactionType.Gift || type == TransactionType.Deposit || type == TransactionType.Income){
             transaction.setType(type);
-            transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-            transaction.setInCurrency(entry[3]);
-            transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-            transaction.setOutCurrency(entry[5]);
+            transaction.setInValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[3])));
+            transaction.setInCurrency(entry[2]);
+            transaction.setOutValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[6])));
+            transaction.setOutCurrency(entry[4]);
         }
 
         if(type == TransactionType.Withdraw){
             transaction.setType(type);
-                transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[7])));
-                transaction.setInCurrency(entry[5]);
-                transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[4])));
-                transaction.setOutCurrency(entry[3]);
+                transaction.setInValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[6])));
+                transaction.setInCurrency(entry[4]);
+                transaction.setOutValue(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[3])));
+                transaction.setOutCurrency(entry[2]);
         }
-        transaction.setFee(Parse.stringToDouble(StringUtils.removeEuro(entry[9])));
-        transaction.setFeeCurrency(entry[5]);
+        transaction.setFee(Parse.stringToDoublePositive(StringUtils.removeEuro(entry[8])));
+        transaction.setFeeCurrency(entry[4]);
         transaction.setExchange(getName());
-        if(entry.length >= 11)
-            transaction.setComment(entry[10]);
+        if(entry.length >= 10)
+            transaction.setComment(entry[9]);
 
         //alternativ : 2019-11-22T08:06:50.400Z
         DateTimeFormatter formatter = null;
@@ -100,11 +100,11 @@ public class CoinbaseImport extends FileImport{
 
         try {
             formatter = DateTimeFormatter.ISO_DATE_TIME;
-            dateTime = LocalDateTime.parse(StringUtils.removeUtc(entry[1]), formatter);
+            dateTime = LocalDateTime.parse(StringUtils.removeUtc(entry[0]), formatter);
         } catch (Exception ex) {
             log.info("Casting into ISO_DATA_TIME not possible, take dd.MM.yy HH:mm instead");
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            dateTime = LocalDateTime.parse(StringUtils.removeUtc(entry[1]), formatter);
+            dateTime = LocalDateTime.parse(StringUtils.removeUtc(entry[0]), formatter);
         }
 
         transaction.setDateTime(dateTime);

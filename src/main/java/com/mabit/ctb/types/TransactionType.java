@@ -16,6 +16,8 @@ public enum TransactionType {
     Gift("Gift"), // Geschenk bekommen
     Donation("Donation"), // Verschenkung bezahlung
     Income("Income"), // Verdienst (GAS)
+    Fee("Fee"),    
+    Decission("Decission"), // Entscheidung
     Lost("Lost"); // Verlust
 
 

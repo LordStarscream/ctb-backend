@@ -53,15 +53,15 @@ public class BtcDirectImport extends FileImport{
             if (direction == TransactionType.Deposit){
                 transaction.setType(type);
                 transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[6])));
-                transaction.setInCurrency(entry[7]);
+                transaction.setInCurrency(entry[7].toUpperCase());
                 transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[3])));
-                transaction.setOutCurrency(entry[4]);
+                transaction.setOutCurrency(entry[4].toUpperCase());
             }else{
                 transaction.setType(type);
                 transaction.setInValue(Parse.stringToDouble(StringUtils.removeEuro(entry[3])));
-                transaction.setInCurrency(entry[4]);
+                transaction.setInCurrency(entry[4].toUpperCase());
                 transaction.setOutValue(Parse.stringToDouble(StringUtils.removeEuro(entry[6])));
-                transaction.setOutCurrency(entry[7]);
+                transaction.setOutCurrency(entry[7].toUpperCase());
             }
         }
         transaction.setExchange(getName());
